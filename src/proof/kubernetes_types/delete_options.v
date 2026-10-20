@@ -45,8 +45,8 @@ Record t := mk {
   Preconditions' : option PreconditionsV.t;
   OrphanDependents' : option bool;
   PropagationPolicy' : option go_string;
-  (* DryRun' : slice.t; *)
-  (* IgnoreStoreReadErrorWithClusterBreakingPotential' : loc; *)
+  DryRun' : option (list go_string);
+  IgnoreStoreReadErrorWithClusterBreakingPotential' : option bool;
 }.
 
 Definition deepown (c: v1.DeleteOptions.t) (v: t) dq: iProp Σ :=
@@ -70,6 +70,18 @@ Definition deepown (c: v1.DeleteOptions.t) (v: t) dq: iProp Σ :=
   "Hdeepown_propagationpolicy_some" ∷ (match v.(PropagationPolicy') with
   | Some vpp => ∃ cpp, c.(v1.DeleteOptions.PropagationPolicy') ↦{dq} cpp ∗ ⌜ cpp = vpp ⌝
   | None => True%I
+  end) ∗
+  (* TODO: Refactor predicates for other slice fields to separate nilness from
+     ownership of the contents using [default []], as below. *)
+  "%Hdeepown_dryrun_none" ∷ ⌜ c.(v1.DeleteOptions.DryRun') = slice.nil ↔ v.(DryRun') = None ⌝ ∗
+  "Hdeepown_dryrun" ∷ c.(v1.DeleteOptions.DryRun') ↦*{dq} default [] v.(DryRun') ∗
+  "%Hdeepown_ignorestorereaderror_none" ∷
+    ⌜ c.(v1.DeleteOptions.IgnoreStoreReadErrorWithClusterBreakingPotential') = null ↔
+      v.(IgnoreStoreReadErrorWithClusterBreakingPotential') = None ⌝ ∗
+  "Hdeepown_ignorestorereaderror_some" ∷ (match v.(IgnoreStoreReadErrorWithClusterBreakingPotential') with
+  | Some enabled => ∃ enabled_c,
+      c.(v1.DeleteOptions.IgnoreStoreReadErrorWithClusterBreakingPotential') ↦{dq} enabled_c ∗ ⌜ enabled_c = enabled ⌝
+  | None => True%I
   end).
 
 Definition deepown_l l v dq: iProp Σ :=
@@ -83,14 +95,21 @@ Definition deepown_i i v dq: iProp Σ :=
 
 (* https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/validation/validation.go#L157 *)
 Definition valid (options : t) : Prop :=
-  match options.(OrphanDependents'), options.(PropagationPolicy') with
+  (match options.(OrphanDependents'), options.(PropagationPolicy') with
   | Some _, Some _ => False
   | _, Some policy =>
       policy = "Foreground"%go ∨
       policy = "Background"%go ∨
       policy = "Orphan"%go
   | _, None => True
-  end.
+  end) ∧
+  Forall (λ directive, directive = "All"%go) (default [] options.(DryRun')) ∧
+  (options.(IgnoreStoreReadErrorWithClusterBreakingPotential') = Some true →
+    default [] options.(DryRun') = [] ∧
+    options.(PropagationPolicy') = None ∧
+    options.(OrphanDependents') = None ∧
+    options.(GracePeriodSeconds') = None ∧
+    options.(Preconditions') = None).
 
 End def.
 End DeleteOptionsV.
