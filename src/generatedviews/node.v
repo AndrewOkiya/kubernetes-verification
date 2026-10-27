@@ -2,7 +2,7 @@
 From New.proof Require Import prelude empty_ffi util.
 From New.proof Require Export deepown.
 From New.proof.k8s_io.api.core Require Export v1_init.
-From New.generatedviews Require Export runtime_time time typemeta objectmeta delete_options pod persistentvolumeclaim replicaset statefulset deployment daemonset.
+From New.generatedviews Require Export runtime_time time typemeta objectmeta delete_options pod persistentvolumeclaim replicaset statefulset deployment controllerrevision daemonset.
 Module api_core_v1 := code.k8s_io.api.core.v1.v1.
 Module meta_v1 := code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.
 Module resource := code.k8s_io.apimachinery.pkg.api.resource.resource.
