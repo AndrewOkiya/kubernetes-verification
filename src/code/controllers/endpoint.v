@@ -2,8 +2,8 @@
 Require Export New.code.kubernetes_model.apimodel.
 Require Export New.code.k8s_io.api.core.v1.
 Require Export New.code.k8s_io.apimachinery.pkg.api.errors.
-Require Export New.code.k8s_io.apimachinery.pkg.labels.
 Require Export New.code.k8s_io.apimachinery.pkg.apis.meta.v1.
+Require Export New.code.k8s_io.apimachinery.pkg.labels.
 Require Export New.code.k8s_io.apimachinery.pkg.util.intstr.
 Module core_v1 := code.k8s_io.api.core.v1.v1.
 Module meta_v1 := code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.
@@ -26,13 +26,13 @@ Definition syncEndpoints {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go_str
 (* go: endpoint.go:13:6 *)
 Definition podReadyⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
   λ: "pod",
-    exception_do (let: "pod" := (GoAlloc (go.PointerType core_v1.Pod) "pod") in
-    let: "$range" := (![go.SliceType core_v1.PodCondition] (StructFieldRef core_v1.PodStatus "Conditions"%go (StructFieldRef core_v1.Pod "Status"%go (![go.PointerType core_v1.Pod] "pod")))) in
-    (let: "condition" := (GoAlloc core_v1.PodCondition (GoZeroVal core_v1.PodCondition #())) in
-    slice.for_range core_v1.PodCondition "$range" (λ: "$key" "$value",
-      do:  ("condition" <-[core_v1.PodCondition] "$value");;;
+    exception_do (let: "pod" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Pod) "pod") in
+    let: "$range" := (![go.SliceType code.k8s_io.api.core.v1.v1.PodCondition] (StructFieldRef code.k8s_io.api.core.v1.v1.PodStatus "Conditions"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "Status"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) in
+    (let: "condition" := (GoAlloc code.k8s_io.api.core.v1.v1.PodCondition (GoZeroVal code.k8s_io.api.core.v1.v1.PodCondition #())) in
+    slice.for_range code.k8s_io.api.core.v1.v1.PodCondition "$range" (λ: "$key" "$value",
+      do:  ("condition" <-[code.k8s_io.api.core.v1.v1.PodCondition] "$value");;;
       do:  "$key";;;
-      (if: Convert go.untyped_bool go.bool (((![core_v1.PodConditionType] (StructFieldRef core_v1.PodCondition "Type"%go "condition")) =⟨core_v1.PodConditionType⟩ core_v1.PodReady) && ((![core_v1.ConditionStatus] (StructFieldRef core_v1.PodCondition "Status"%go "condition")) =⟨core_v1.ConditionStatus⟩ core_v1.ConditionTrue))
+      (if: Convert go.untyped_bool go.bool (((![code.k8s_io.api.core.v1.v1.PodConditionType] (StructFieldRef code.k8s_io.api.core.v1.v1.PodCondition "Type"%go "condition")) =⟨code.k8s_io.api.core.v1.v1.PodConditionType⟩ code.k8s_io.api.core.v1.v1.PodReady) && ((![code.k8s_io.api.core.v1.v1.ConditionStatus] (StructFieldRef code.k8s_io.api.core.v1.v1.PodCondition "Status"%go "condition")) =⟨code.k8s_io.api.core.v1.v1.ConditionStatus⟩ code.k8s_io.api.core.v1.v1.ConditionTrue))
       then return: (#true)
       else do:  #())));;;
     return: (#false)).
@@ -44,82 +44,82 @@ Definition podReadyⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : 
    go: endpoint.go:25:6 *)
 Definition targetPortⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
   λ: "pod" "servicePort",
-    exception_do (let: "servicePort" := (GoAlloc (go.PointerType core_v1.ServicePort) "servicePort") in
-    let: "pod" := (GoAlloc (go.PointerType core_v1.Pod) "pod") in
-    let: "$sw" := (![intstr.Type'] (StructFieldRef intstr.IntOrString "Type"%go (StructFieldRef core_v1.ServicePort "TargetPort"%go (![go.PointerType core_v1.ServicePort] "servicePort")))) in
-    (if: "$sw" =⟨intstr.Type'⟩ intstr.String
+    exception_do (let: "servicePort" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.ServicePort) "servicePort") in
+    let: "pod" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Pod) "pod") in
+    let: "$sw" := (![code.k8s_io.apimachinery.pkg.util.intstr.intstr.Type'] (StructFieldRef code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString "Type"%go (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "TargetPort"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort")))) in
+    (if: "$sw" =⟨code.k8s_io.apimachinery.pkg.util.intstr.intstr.Type'⟩ code.k8s_io.apimachinery.pkg.util.intstr.intstr.String
     then
-      let: "$range" := (![go.SliceType core_v1.Container] (StructFieldRef core_v1.PodSpec "Containers"%go (StructFieldRef core_v1.Pod "Spec"%go (![go.PointerType core_v1.Pod] "pod")))) in
-      (let: "container" := (GoAlloc core_v1.Container (GoZeroVal core_v1.Container #())) in
-      slice.for_range core_v1.Container "$range" (λ: "$key" "$value",
-        do:  ("container" <-[core_v1.Container] "$value");;;
+      let: "$range" := (![go.SliceType code.k8s_io.api.core.v1.v1.Container] (StructFieldRef code.k8s_io.api.core.v1.v1.PodSpec "Containers"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) in
+      (let: "container" := (GoAlloc code.k8s_io.api.core.v1.v1.Container (GoZeroVal code.k8s_io.api.core.v1.v1.Container #())) in
+      slice.for_range code.k8s_io.api.core.v1.v1.Container "$range" (λ: "$key" "$value",
+        do:  ("container" <-[code.k8s_io.api.core.v1.v1.Container] "$value");;;
         do:  "$key";;;
-        let: "$range" := (![go.SliceType core_v1.ContainerPort] (StructFieldRef core_v1.Container "Ports"%go "container")) in
-        (let: "port" := (GoAlloc core_v1.ContainerPort (GoZeroVal core_v1.ContainerPort #())) in
-        slice.for_range core_v1.ContainerPort "$range" (λ: "$key" "$value",
-          do:  ("port" <-[core_v1.ContainerPort] "$value");;;
+        let: "$range" := (![go.SliceType code.k8s_io.api.core.v1.v1.ContainerPort] (StructFieldRef code.k8s_io.api.core.v1.v1.Container "Ports"%go "container")) in
+        (let: "port" := (GoAlloc code.k8s_io.api.core.v1.v1.ContainerPort (GoZeroVal code.k8s_io.api.core.v1.v1.ContainerPort #())) in
+        slice.for_range code.k8s_io.api.core.v1.v1.ContainerPort "$range" (λ: "$key" "$value",
+          do:  ("port" <-[code.k8s_io.api.core.v1.v1.ContainerPort] "$value");;;
           do:  "$key";;;
-          (if: Convert go.untyped_bool go.bool (((![go.string] (StructFieldRef core_v1.ContainerPort "Name"%go "port")) =⟨go.string⟩ (![go.string] (StructFieldRef intstr.IntOrString "StrVal"%go (StructFieldRef core_v1.ServicePort "TargetPort"%go (![go.PointerType core_v1.ServicePort] "servicePort"))))) && ((![core_v1.Protocol] (StructFieldRef core_v1.ContainerPort "Protocol"%go "port")) =⟨core_v1.Protocol⟩ (![core_v1.Protocol] (StructFieldRef core_v1.ServicePort "Protocol"%go (![go.PointerType core_v1.ServicePort] "servicePort")))))
-          then return: (![go.int32] (StructFieldRef core_v1.ContainerPort "ContainerPort"%go "port"), #true)
+          (if: Convert go.untyped_bool go.bool (((![go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.ContainerPort "Name"%go "port")) =⟨go.string⟩ (![go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString "StrVal"%go (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "TargetPort"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort"))))) && ((![code.k8s_io.api.core.v1.v1.Protocol] (StructFieldRef code.k8s_io.api.core.v1.v1.ContainerPort "Protocol"%go "port")) =⟨code.k8s_io.api.core.v1.v1.Protocol⟩ (![code.k8s_io.api.core.v1.v1.Protocol] (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "Protocol"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort")))))
+          then return: (![go.int32] (StructFieldRef code.k8s_io.api.core.v1.v1.ContainerPort "ContainerPort"%go "port"), #true)
           else do:  #())))));;;
       return: (#(W32 0), #false)
     else
-      (if: "$sw" =⟨intstr.Type'⟩ intstr.Int
+      (if: "$sw" =⟨code.k8s_io.apimachinery.pkg.util.intstr.intstr.Type'⟩ code.k8s_io.apimachinery.pkg.util.intstr.intstr.Int
       then
         (let: "port" := (GoAlloc go.int32 (GoZeroVal go.int32 #())) in
-        let: "$r0" := (![go.int32] (StructFieldRef intstr.IntOrString "IntVal"%go (StructFieldRef core_v1.ServicePort "TargetPort"%go (![go.PointerType core_v1.ServicePort] "servicePort")))) in
+        let: "$r0" := (![go.int32] (StructFieldRef code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString "IntVal"%go (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "TargetPort"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort")))) in
         do:  ("port" <-[go.int32] "$r0");;;
         (if: Convert go.untyped_bool go.bool ((![go.int32] "port") ≠⟨go.int32⟩ #(W32 0))
         then return: (![go.int32] "port", #true)
         else do:  #()));;;
-        return: (![go.int32] (StructFieldRef core_v1.ServicePort "Port"%go (![go.PointerType core_v1.ServicePort] "servicePort")), #true)
-      else return: (![go.int32] (StructFieldRef core_v1.ServicePort "Port"%go (![go.PointerType core_v1.ServicePort] "servicePort")), #true)))).
+        return: (![go.int32] (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "Port"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort")), #true)
+      else return: (![go.int32] (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "Port"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort")), #true)))).
 
 (* go: endpoint.go:46:6 *)
 Definition buildEndpointsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
   λ: "service" "pods",
-    exception_do (let: "pods" := (GoAlloc (go.SliceType (go.PointerType core_v1.Pod)) "pods") in
-    let: "service" := (GoAlloc (go.PointerType core_v1.Service) "service") in
-    let: "result" := (GoAlloc (go.PointerType core_v1.Endpoints) (GoZeroVal (go.PointerType core_v1.Endpoints) #())) in
-    let: "$r0" := (GoAlloc core_v1.Endpoints (let: "$v0" := (let: "$v0" := (![go.string] (StructFieldRef meta_v1.ObjectMeta "Name"%go (StructFieldRef core_v1.Service "ObjectMeta"%go (![go.PointerType core_v1.Service] "service")))) in
-    let: "$v1" := (![go.string] (StructFieldRef meta_v1.ObjectMeta "Namespace"%go (StructFieldRef core_v1.Service "ObjectMeta"%go (![go.PointerType core_v1.Service] "service")))) in
-    let: "$v2" := (![go.MapType go.string go.string] (StructFieldRef meta_v1.ObjectMeta "Labels"%go (StructFieldRef core_v1.Service "ObjectMeta"%go (![go.PointerType core_v1.Service] "service")))) in
-    CompositeLiteral meta_v1.ObjectMeta (LiteralValue [KeyedElement (Some (KeyField "Name"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Namespace"%go)) (ElementExpression go.string "$v1"); KeyedElement (Some (KeyField "Labels"%go)) (ElementExpression (go.MapType go.string go.string) "$v2")])) in
-    CompositeLiteral core_v1.Endpoints (LiteralValue [KeyedElement (Some (KeyField "ObjectMeta"%go)) (ElementExpression meta_v1.ObjectMeta "$v0")]))) in
-    do:  ("result" <-[go.PointerType core_v1.Endpoints] "$r0");;;
-    let: "$range" := (![go.SliceType (go.PointerType core_v1.Pod)] "pods") in
-    (let: "pod" := (GoAlloc (go.PointerType core_v1.Pod) (GoZeroVal (go.PointerType core_v1.Pod) #())) in
-    slice.for_range (go.PointerType core_v1.Pod) "$range" (λ: "$key" "$value",
-      do:  ("pod" <-[go.PointerType core_v1.Pod] "$value");;;
+    exception_do (let: "pods" := (GoAlloc (go.SliceType (go.PointerType code.k8s_io.api.core.v1.v1.Pod)) "pods") in
+    let: "service" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Service) "service") in
+    let: "result" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Endpoints) (GoZeroVal (go.PointerType code.k8s_io.api.core.v1.v1.Endpoints) #())) in
+    let: "$r0" := (GoAlloc code.k8s_io.api.core.v1.v1.Endpoints (let: "$v0" := (let: "$v0" := (![go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "Name"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) in
+    let: "$v1" := (![go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "Namespace"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) in
+    let: "$v2" := (![go.MapType go.string go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "Labels"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) in
+    CompositeLiteral code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta (LiteralValue [KeyedElement (Some (KeyField "Name"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Namespace"%go)) (ElementExpression go.string "$v1"); KeyedElement (Some (KeyField "Labels"%go)) (ElementExpression (go.MapType go.string go.string) "$v2")])) in
+    CompositeLiteral code.k8s_io.api.core.v1.v1.Endpoints (LiteralValue [KeyedElement (Some (KeyField "ObjectMeta"%go)) (ElementExpression code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "$v0")]))) in
+    do:  ("result" <-[go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "$r0");;;
+    let: "$range" := (![go.SliceType (go.PointerType code.k8s_io.api.core.v1.v1.Pod)] "pods") in
+    (let: "pod" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Pod) (GoZeroVal (go.PointerType code.k8s_io.api.core.v1.v1.Pod) #())) in
+    slice.for_range (go.PointerType code.k8s_io.api.core.v1.v1.Pod) "$range" (λ: "$key" "$value",
+      do:  ("pod" <-[go.PointerType code.k8s_io.api.core.v1.v1.Pod] "$value");;;
       do:  "$key";;;
-      (if: Convert go.untyped_bool go.bool (((![go.PointerType meta_v1.Time] (StructFieldRef meta_v1.ObjectMeta "DeletionTimestamp"%go (StructFieldRef core_v1.Pod "ObjectMeta"%go (![go.PointerType core_v1.Pod] "pod")))) ≠⟨go.PointerType meta_v1.Time⟩ (Convert go.untyped_nil (go.PointerType meta_v1.Time) UntypedNil)) || ((![go.string] (StructFieldRef core_v1.PodStatus "PodIP"%go (StructFieldRef core_v1.Pod "Status"%go (![go.PointerType core_v1.Pod] "pod")))) =⟨go.string⟩ #""%go))
+      (if: Convert go.untyped_bool go.bool (((![go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "DeletionTimestamp"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) ≠⟨go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time⟩ (Convert go.untyped_nil (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time) UntypedNil)) || ((![go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.PodStatus "PodIP"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "Status"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) =⟨go.string⟩ #""%go))
       then continue: #()
       else do:  #());;;
-      let: "address" := (GoAlloc core_v1.EndpointAddress (GoZeroVal core_v1.EndpointAddress #())) in
-      let: "$r0" := (let: "$v0" := (![go.string] (StructFieldRef core_v1.PodStatus "PodIP"%go (StructFieldRef core_v1.Pod "Status"%go (![go.PointerType core_v1.Pod] "pod")))) in
-      let: "$v1" := (GoAlloc core_v1.ObjectReference (let: "$v0" := #"Pod"%go in
-      let: "$v1" := (![go.string] (StructFieldRef meta_v1.ObjectMeta "Name"%go (StructFieldRef core_v1.Pod "ObjectMeta"%go (![go.PointerType core_v1.Pod] "pod")))) in
-      let: "$v2" := (![go.string] (StructFieldRef meta_v1.ObjectMeta "Namespace"%go (StructFieldRef core_v1.Pod "ObjectMeta"%go (![go.PointerType core_v1.Pod] "pod")))) in
-      let: "$v3" := (![types.UID] (StructFieldRef meta_v1.ObjectMeta "UID"%go (StructFieldRef core_v1.Pod "ObjectMeta"%go (![go.PointerType core_v1.Pod] "pod")))) in
-      CompositeLiteral core_v1.ObjectReference (LiteralValue [KeyedElement (Some (KeyField "Kind"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Name"%go)) (ElementExpression go.string "$v1"); KeyedElement (Some (KeyField "Namespace"%go)) (ElementExpression go.string "$v2"); KeyedElement (Some (KeyField "UID"%go)) (ElementExpression types.UID "$v3")]))) in
-      CompositeLiteral core_v1.EndpointAddress (LiteralValue [KeyedElement (Some (KeyField "IP"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "TargetRef"%go)) (ElementExpression (go.PointerType core_v1.ObjectReference) "$v1")])) in
-      do:  ("address" <-[core_v1.EndpointAddress] "$r0");;;
-      let: "subset" := (GoAlloc core_v1.EndpointSubset (GoZeroVal core_v1.EndpointSubset #())) in
-      let: "$r0" := (let: "$v0" := ((FuncResolve go.make3 [go.SliceType core_v1.EndpointPort] #()) #(W64 0) (let: "$a0" := (![go.SliceType core_v1.ServicePort] (StructFieldRef core_v1.ServiceSpec "Ports"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service")))) in
-      (FuncResolve go.len [go.SliceType core_v1.ServicePort] #()) "$a0")) in
-      CompositeLiteral core_v1.EndpointSubset (LiteralValue [KeyedElement (Some (KeyField "Ports"%go)) (ElementExpression (go.SliceType core_v1.EndpointPort) "$v0")])) in
-      do:  ("subset" <-[core_v1.EndpointSubset] "$r0");;;
-      let: "$range" := (![go.SliceType core_v1.ServicePort] (StructFieldRef core_v1.ServiceSpec "Ports"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service")))) in
+      let: "address" := (GoAlloc code.k8s_io.api.core.v1.v1.EndpointAddress (GoZeroVal code.k8s_io.api.core.v1.v1.EndpointAddress #())) in
+      let: "$r0" := (let: "$v0" := (![go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.PodStatus "PodIP"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "Status"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) in
+      let: "$v1" := (GoAlloc code.k8s_io.api.core.v1.v1.ObjectReference (let: "$v0" := #"Pod"%go in
+      let: "$v1" := (![go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "Name"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) in
+      let: "$v2" := (![go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "Namespace"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) in
+      let: "$v3" := (![code.k8s_io.apimachinery.pkg.types.types.UID] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "UID"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Pod "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod")))) in
+      CompositeLiteral code.k8s_io.api.core.v1.v1.ObjectReference (LiteralValue [KeyedElement (Some (KeyField "Kind"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Name"%go)) (ElementExpression go.string "$v1"); KeyedElement (Some (KeyField "Namespace"%go)) (ElementExpression go.string "$v2"); KeyedElement (Some (KeyField "UID"%go)) (ElementExpression code.k8s_io.apimachinery.pkg.types.types.UID "$v3")]))) in
+      CompositeLiteral code.k8s_io.api.core.v1.v1.EndpointAddress (LiteralValue [KeyedElement (Some (KeyField "IP"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "TargetRef"%go)) (ElementExpression (go.PointerType code.k8s_io.api.core.v1.v1.ObjectReference) "$v1")])) in
+      do:  ("address" <-[code.k8s_io.api.core.v1.v1.EndpointAddress] "$r0");;;
+      let: "subset" := (GoAlloc code.k8s_io.api.core.v1.v1.EndpointSubset (GoZeroVal code.k8s_io.api.core.v1.v1.EndpointSubset #())) in
+      let: "$r0" := (let: "$v0" := ((FuncResolve go.make3 [go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort] #()) #(W64 0) (let: "$a0" := (![go.SliceType code.k8s_io.api.core.v1.v1.ServicePort] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "Ports"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) in
+      (FuncResolve go.len [go.SliceType code.k8s_io.api.core.v1.v1.ServicePort] #()) "$a0")) in
+      CompositeLiteral code.k8s_io.api.core.v1.v1.EndpointSubset (LiteralValue [KeyedElement (Some (KeyField "Ports"%go)) (ElementExpression (go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort) "$v0")])) in
+      do:  ("subset" <-[code.k8s_io.api.core.v1.v1.EndpointSubset] "$r0");;;
+      let: "$range" := (![go.SliceType code.k8s_io.api.core.v1.v1.ServicePort] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "Ports"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) in
       (let: "i" := (GoAlloc go.int (GoZeroVal go.int #())) in
-      slice.for_range core_v1.ServicePort "$range" (λ: "$key" "$value",
+      slice.for_range code.k8s_io.api.core.v1.v1.ServicePort "$range" (λ: "$key" "$value",
         do:  ("i" <-[go.int] "$key");;;
-        let: "servicePort" := (GoAlloc (go.PointerType core_v1.ServicePort) (GoZeroVal (go.PointerType core_v1.ServicePort) #())) in
-        let: "$r0" := (IndexRef (go.SliceType core_v1.ServicePort) (![go.SliceType core_v1.ServicePort] (StructFieldRef core_v1.ServiceSpec "Ports"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service"))), ![go.int] "i")) in
-        do:  ("servicePort" <-[go.PointerType core_v1.ServicePort] "$r0");;;
+        let: "servicePort" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.ServicePort) (GoZeroVal (go.PointerType code.k8s_io.api.core.v1.v1.ServicePort) #())) in
+        let: "$r0" := (IndexRef (go.SliceType code.k8s_io.api.core.v1.v1.ServicePort) (![go.SliceType code.k8s_io.api.core.v1.v1.ServicePort] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "Ports"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service"))), ![go.int] "i")) in
+        do:  ("servicePort" <-[go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "$r0");;;
         let: "found" := (GoAlloc go.bool (GoZeroVal go.bool #())) in
         let: "port" := (GoAlloc go.int32 (GoZeroVal go.int32 #())) in
-        let: ("$ret0", "$ret1") := (let: "$a0" := (![go.PointerType core_v1.Pod] "pod") in
-        let: "$a1" := (![go.PointerType core_v1.ServicePort] "servicePort") in
+        let: ("$ret0", "$ret1") := (let: "$a0" := (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod") in
+        let: "$a1" := (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort") in
         (FuncResolve targetPort [] #()) "$a0" "$a1") in
         let: "$r0" := "$ret0" in
         let: "$r1" := "$ret1" in
@@ -128,36 +128,36 @@ Definition buildEndpointsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalConte
         (if: (⟨go.bool⟩! (![go.bool] "found"))
         then continue: #()
         else do:  #());;;
-        let: "$r0" := (let: "$a0" := (![go.SliceType core_v1.EndpointPort] (StructFieldRef core_v1.EndpointSubset "Ports"%go "subset")) in
-        let: "$a1" := ((let: "$sl0" := (let: "$v0" := (![go.string] (StructFieldRef core_v1.ServicePort "Name"%go (![go.PointerType core_v1.ServicePort] "servicePort"))) in
+        let: "$r0" := (let: "$a0" := (![go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort] (StructFieldRef code.k8s_io.api.core.v1.v1.EndpointSubset "Ports"%go "subset")) in
+        let: "$a1" := ((let: "$sl0" := (let: "$v0" := (![go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "Name"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort"))) in
         let: "$v1" := (![go.int32] "port") in
-        let: "$v2" := (![core_v1.Protocol] (StructFieldRef core_v1.ServicePort "Protocol"%go (![go.PointerType core_v1.ServicePort] "servicePort"))) in
-        let: "$v3" := (![go.PointerType go.string] (StructFieldRef core_v1.ServicePort "AppProtocol"%go (![go.PointerType core_v1.ServicePort] "servicePort"))) in
-        CompositeLiteral core_v1.EndpointPort (LiteralValue [KeyedElement (Some (KeyField "Name"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Port"%go)) (ElementExpression go.int32 "$v1"); KeyedElement (Some (KeyField "Protocol"%go)) (ElementExpression core_v1.Protocol "$v2"); KeyedElement (Some (KeyField "AppProtocol"%go)) (ElementExpression (go.PointerType go.string) "$v3")])) in
-        CompositeLiteral (go.SliceType core_v1.EndpointPort) (LiteralValue [KeyedElement None (ElementExpression core_v1.EndpointPort "$sl0")]))) in
-        (FuncResolve go.append [go.SliceType core_v1.EndpointPort] #()) "$a0" "$a1") in
-        do:  ((StructFieldRef core_v1.EndpointSubset "Ports"%go "subset") <-[go.SliceType core_v1.EndpointPort] "$r0")));;;
-      (if: Convert go.untyped_bool go.bool (((let: "$a0" := (![go.SliceType core_v1.ServicePort] (StructFieldRef core_v1.ServiceSpec "Ports"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service")))) in
-      (FuncResolve go.len [go.SliceType core_v1.ServicePort] #()) "$a0") >⟨go.int⟩ #(W64 0)) && ((let: "$a0" := (![go.SliceType core_v1.EndpointPort] (StructFieldRef core_v1.EndpointSubset "Ports"%go "subset")) in
-      (FuncResolve go.len [go.SliceType core_v1.EndpointPort] #()) "$a0") =⟨go.int⟩ #(W64 0)))
+        let: "$v2" := (![code.k8s_io.api.core.v1.v1.Protocol] (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "Protocol"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort"))) in
+        let: "$v3" := (![go.PointerType go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.ServicePort "AppProtocol"%go (![go.PointerType code.k8s_io.api.core.v1.v1.ServicePort] "servicePort"))) in
+        CompositeLiteral code.k8s_io.api.core.v1.v1.EndpointPort (LiteralValue [KeyedElement (Some (KeyField "Name"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Port"%go)) (ElementExpression go.int32 "$v1"); KeyedElement (Some (KeyField "Protocol"%go)) (ElementExpression code.k8s_io.api.core.v1.v1.Protocol "$v2"); KeyedElement (Some (KeyField "AppProtocol"%go)) (ElementExpression (go.PointerType go.string) "$v3")])) in
+        CompositeLiteral (go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort) (LiteralValue [KeyedElement None (ElementExpression code.k8s_io.api.core.v1.v1.EndpointPort "$sl0")]))) in
+        (FuncResolve go.append [go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort] #()) "$a0" "$a1") in
+        do:  ((StructFieldRef code.k8s_io.api.core.v1.v1.EndpointSubset "Ports"%go "subset") <-[go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort] "$r0")));;;
+      (if: Convert go.untyped_bool go.bool (((let: "$a0" := (![go.SliceType code.k8s_io.api.core.v1.v1.ServicePort] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "Ports"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) in
+      (FuncResolve go.len [go.SliceType code.k8s_io.api.core.v1.v1.ServicePort] #()) "$a0") >⟨go.int⟩ #(W64 0)) && ((let: "$a0" := (![go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort] (StructFieldRef code.k8s_io.api.core.v1.v1.EndpointSubset "Ports"%go "subset")) in
+      (FuncResolve go.len [go.SliceType code.k8s_io.api.core.v1.v1.EndpointPort] #()) "$a0") =⟨go.int⟩ #(W64 0)))
       then continue: #()
       else do:  #());;;
-      (if: (![go.bool] (StructFieldRef core_v1.ServiceSpec "PublishNotReadyAddresses"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service")))) || (let: "$a0" := (![go.PointerType core_v1.Pod] "pod") in
+      (if: (![go.bool] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "PublishNotReadyAddresses"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) || (let: "$a0" := (![go.PointerType code.k8s_io.api.core.v1.v1.Pod] "pod") in
       (FuncResolve podReady [] #()) "$a0")
       then
-        let: "$r0" := (let: "$v0" := (![core_v1.EndpointAddress] "address") in
-        CompositeLiteral (go.SliceType core_v1.EndpointAddress) (LiteralValue [KeyedElement None (ElementExpression core_v1.EndpointAddress "$v0")])) in
-        do:  ((StructFieldRef core_v1.EndpointSubset "Addresses"%go "subset") <-[go.SliceType core_v1.EndpointAddress] "$r0")
+        let: "$r0" := (let: "$v0" := (![code.k8s_io.api.core.v1.v1.EndpointAddress] "address") in
+        CompositeLiteral (go.SliceType code.k8s_io.api.core.v1.v1.EndpointAddress) (LiteralValue [KeyedElement None (ElementExpression code.k8s_io.api.core.v1.v1.EndpointAddress "$v0")])) in
+        do:  ((StructFieldRef code.k8s_io.api.core.v1.v1.EndpointSubset "Addresses"%go "subset") <-[go.SliceType code.k8s_io.api.core.v1.v1.EndpointAddress] "$r0")
       else
-        let: "$r0" := (let: "$v0" := (![core_v1.EndpointAddress] "address") in
-        CompositeLiteral (go.SliceType core_v1.EndpointAddress) (LiteralValue [KeyedElement None (ElementExpression core_v1.EndpointAddress "$v0")])) in
-        do:  ((StructFieldRef core_v1.EndpointSubset "NotReadyAddresses"%go "subset") <-[go.SliceType core_v1.EndpointAddress] "$r0"));;;
-      let: "$r0" := (let: "$a0" := (![go.SliceType core_v1.EndpointSubset] (StructFieldRef core_v1.Endpoints "Subsets"%go (![go.PointerType core_v1.Endpoints] "result"))) in
-      let: "$a1" := ((let: "$sl0" := (![core_v1.EndpointSubset] "subset") in
-      CompositeLiteral (go.SliceType core_v1.EndpointSubset) (LiteralValue [KeyedElement None (ElementExpression core_v1.EndpointSubset "$sl0")]))) in
-      (FuncResolve go.append [go.SliceType core_v1.EndpointSubset] #()) "$a0" "$a1") in
-      do:  ((StructFieldRef core_v1.Endpoints "Subsets"%go (![go.PointerType core_v1.Endpoints] "result")) <-[go.SliceType core_v1.EndpointSubset] "$r0")));;;
-    return: (![go.PointerType core_v1.Endpoints] "result")).
+        let: "$r0" := (let: "$v0" := (![code.k8s_io.api.core.v1.v1.EndpointAddress] "address") in
+        CompositeLiteral (go.SliceType code.k8s_io.api.core.v1.v1.EndpointAddress) (LiteralValue [KeyedElement None (ElementExpression code.k8s_io.api.core.v1.v1.EndpointAddress "$v0")])) in
+        do:  ((StructFieldRef code.k8s_io.api.core.v1.v1.EndpointSubset "NotReadyAddresses"%go "subset") <-[go.SliceType code.k8s_io.api.core.v1.v1.EndpointAddress] "$r0"));;;
+      let: "$r0" := (let: "$a0" := (![go.SliceType code.k8s_io.api.core.v1.v1.EndpointSubset] (StructFieldRef code.k8s_io.api.core.v1.v1.Endpoints "Subsets"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "result"))) in
+      let: "$a1" := ((let: "$sl0" := (![code.k8s_io.api.core.v1.v1.EndpointSubset] "subset") in
+      CompositeLiteral (go.SliceType code.k8s_io.api.core.v1.v1.EndpointSubset) (LiteralValue [KeyedElement None (ElementExpression code.k8s_io.api.core.v1.v1.EndpointSubset "$sl0")]))) in
+      (FuncResolve go.append [go.SliceType code.k8s_io.api.core.v1.v1.EndpointSubset] #()) "$a0" "$a1") in
+      do:  ((StructFieldRef code.k8s_io.api.core.v1.v1.Endpoints "Subsets"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "result")) <-[go.SliceType code.k8s_io.api.core.v1.v1.EndpointSubset] "$r0")));;;
+    return: (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "result")).
 
 (* go: endpoint.go:97:6 *)
 Definition syncEndpointsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
@@ -165,57 +165,57 @@ Definition syncEndpointsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContex
     exception_do (let: "name" := (GoAlloc go.string "name") in
     let: "namespace" := (GoAlloc go.string "namespace") in
     let: "err" := (GoAlloc go.error (GoZeroVal go.error #())) in
-    let: "service" := (GoAlloc (go.PointerType core_v1.Service) (GoZeroVal (go.PointerType core_v1.Service) #())) in
+    let: "service" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Service) (GoZeroVal (go.PointerType code.k8s_io.api.core.v1.v1.Service) #())) in
     let: ("$ret0", "$ret1") := (let: "$a0" := (![go.string] "namespace") in
     let: "$a1" := (![go.string] "name") in
-    (MethodResolve (go.PointerType apimodel.State) "ServiceGet"%go (![go.PointerType apimodel.State] (GlobalVarAddr apimodel.ModelState #()))) "$a0" "$a1") in
+    (MethodResolve (go.PointerType code.kubernetes_model.apimodel.apimodel.State) "ServiceGet"%go (![go.PointerType code.kubernetes_model.apimodel.apimodel.State] (GlobalVarAddr code.kubernetes_model.apimodel.apimodel.ModelState #()))) "$a0" "$a1") in
     let: "$r0" := "$ret0" in
     let: "$r1" := "$ret1" in
-    do:  ("service" <-[go.PointerType core_v1.Service] "$r0");;;
+    do:  ("service" <-[go.PointerType code.k8s_io.api.core.v1.v1.Service] "$r0");;;
     do:  ("err" <-[go.error] "$r1");;;
     (if: let: "$a0" := (![go.error] "err") in
-    (FuncResolve errors.IsNotFound [] #()) "$a0"
+    (FuncResolve code.k8s_io.apimachinery.pkg.api.errors.errors.IsNotFound [] #()) "$a0"
     then return: (Convert go.untyped_nil go.error UntypedNil)
     else do:  #());;;
     (if: Convert go.untyped_bool go.bool ((![go.error] "err") ≠⟨go.error⟩ (Convert go.untyped_nil go.error UntypedNil))
     then return: (![go.error] "err")
     else do:  #());;;
-    (if: Convert go.untyped_bool go.bool ((![go.MapType go.string go.string] (StructFieldRef core_v1.ServiceSpec "Selector"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service")))) =⟨go.MapType go.string go.string⟩ (Convert go.untyped_nil (go.MapType go.string go.string) UntypedNil))
+    (if: Convert go.untyped_bool go.bool ((![go.MapType go.string go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "Selector"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service")))) =⟨go.MapType go.string go.string⟩ (Convert go.untyped_nil (go.MapType go.string go.string) UntypedNil))
     then return: (Convert go.untyped_nil go.error UntypedNil)
     else do:  #());;;
-    let: "selector" := (GoAlloc labels.Selector (GoZeroVal labels.Selector #())) in
-    let: "$r0" := ((MethodResolve labels.Set' "AsSelectorPreValidated"%go (![go.MapType go.string go.string] (StructFieldRef core_v1.ServiceSpec "Selector"%go (StructFieldRef core_v1.Service "Spec"%go (![go.PointerType core_v1.Service] "service"))))) #()) in
-    do:  ("selector" <-[labels.Selector] "$r0");;;
-    let: "pods" := (GoAlloc (go.SliceType (go.PointerType core_v1.Pod)) (GoZeroVal (go.SliceType (go.PointerType core_v1.Pod)) #())) in
+    let: "selector" := (GoAlloc code.k8s_io.apimachinery.pkg.labels.labels.Selector (GoZeroVal code.k8s_io.apimachinery.pkg.labels.labels.Selector #())) in
+    let: "$r0" := ((MethodResolve code.k8s_io.apimachinery.pkg.labels.labels.Set' "AsSelectorPreValidated"%go (![go.MapType go.string go.string] (StructFieldRef code.k8s_io.api.core.v1.v1.ServiceSpec "Selector"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Service "Spec"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service"))))) #()) in
+    do:  ("selector" <-[code.k8s_io.apimachinery.pkg.labels.labels.Selector] "$r0");;;
+    let: "pods" := (GoAlloc (go.SliceType (go.PointerType code.k8s_io.api.core.v1.v1.Pod)) (GoZeroVal (go.SliceType (go.PointerType code.k8s_io.api.core.v1.v1.Pod)) #())) in
     let: ("$ret0", "$ret1") := (let: "$a0" := (![go.string] "namespace") in
-    let: "$a1" := (![labels.Selector] "selector") in
-    (MethodResolve (go.PointerType apimodel.State) "PodList"%go (![go.PointerType apimodel.State] (GlobalVarAddr apimodel.ModelState #()))) "$a0" "$a1") in
+    let: "$a1" := (![code.k8s_io.apimachinery.pkg.labels.labels.Selector] "selector") in
+    (MethodResolve (go.PointerType code.kubernetes_model.apimodel.apimodel.State) "PodList"%go (![go.PointerType code.kubernetes_model.apimodel.apimodel.State] (GlobalVarAddr code.kubernetes_model.apimodel.apimodel.ModelState #()))) "$a0" "$a1") in
     let: "$r0" := "$ret0" in
     let: "$r1" := "$ret1" in
-    do:  ("pods" <-[go.SliceType (go.PointerType core_v1.Pod)] "$r0");;;
+    do:  ("pods" <-[go.SliceType (go.PointerType code.k8s_io.api.core.v1.v1.Pod)] "$r0");;;
     do:  ("err" <-[go.error] "$r1");;;
     (if: Convert go.untyped_bool go.bool ((![go.error] "err") ≠⟨go.error⟩ (Convert go.untyped_nil go.error UntypedNil))
     then return: (![go.error] "err")
     else do:  #());;;
-    let: "endpoints" := (GoAlloc (go.PointerType core_v1.Endpoints) (GoZeroVal (go.PointerType core_v1.Endpoints) #())) in
-    let: "$r0" := (let: "$a0" := (![go.PointerType core_v1.Service] "service") in
-    let: "$a1" := (![go.SliceType (go.PointerType core_v1.Pod)] "pods") in
+    let: "endpoints" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Endpoints) (GoZeroVal (go.PointerType code.k8s_io.api.core.v1.v1.Endpoints) #())) in
+    let: "$r0" := (let: "$a0" := (![go.PointerType code.k8s_io.api.core.v1.v1.Service] "service") in
+    let: "$a1" := (![go.SliceType (go.PointerType code.k8s_io.api.core.v1.v1.Pod)] "pods") in
     (FuncResolve buildEndpoints [] #()) "$a0" "$a1") in
-    do:  ("endpoints" <-[go.PointerType core_v1.Endpoints] "$r0");;;
-    let: "current" := (GoAlloc (go.PointerType core_v1.Endpoints) (GoZeroVal (go.PointerType core_v1.Endpoints) #())) in
+    do:  ("endpoints" <-[go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "$r0");;;
+    let: "current" := (GoAlloc (go.PointerType code.k8s_io.api.core.v1.v1.Endpoints) (GoZeroVal (go.PointerType code.k8s_io.api.core.v1.v1.Endpoints) #())) in
     let: ("$ret0", "$ret1") := (let: "$a0" := (![go.string] "namespace") in
     let: "$a1" := (![go.string] "name") in
-    (MethodResolve (go.PointerType apimodel.State) "EndpointsGet"%go (![go.PointerType apimodel.State] (GlobalVarAddr apimodel.ModelState #()))) "$a0" "$a1") in
+    (MethodResolve (go.PointerType code.kubernetes_model.apimodel.apimodel.State) "EndpointsGet"%go (![go.PointerType code.kubernetes_model.apimodel.apimodel.State] (GlobalVarAddr code.kubernetes_model.apimodel.apimodel.ModelState #()))) "$a0" "$a1") in
     let: "$r0" := "$ret0" in
     let: "$r1" := "$ret1" in
-    do:  ("current" <-[go.PointerType core_v1.Endpoints] "$r0");;;
+    do:  ("current" <-[go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "$r0");;;
     do:  ("err" <-[go.error] "$r1");;;
     (if: let: "$a0" := (![go.error] "err") in
-    (FuncResolve errors.IsNotFound [] #()) "$a0"
+    (FuncResolve code.k8s_io.apimachinery.pkg.api.errors.errors.IsNotFound [] #()) "$a0"
     then
       let: ("$ret0", "$ret1") := (let: "$a0" := (![go.string] "namespace") in
-      let: "$a1" := (![go.PointerType core_v1.Endpoints] "endpoints") in
-      (MethodResolve (go.PointerType apimodel.State) "EndpointsCreate"%go (![go.PointerType apimodel.State] (GlobalVarAddr apimodel.ModelState #()))) "$a0" "$a1") in
+      let: "$a1" := (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "endpoints") in
+      (MethodResolve (go.PointerType code.kubernetes_model.apimodel.apimodel.State) "EndpointsCreate"%go (![go.PointerType code.kubernetes_model.apimodel.apimodel.State] (GlobalVarAddr code.kubernetes_model.apimodel.apimodel.ModelState #()))) "$a0" "$a1") in
       let: "$r0" := "$ret0" in
       let: "$r1" := "$ret1" in
       do:  "$r0";;;
@@ -225,11 +225,11 @@ Definition syncEndpointsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContex
     (if: Convert go.untyped_bool go.bool ((![go.error] "err") ≠⟨go.error⟩ (Convert go.untyped_nil go.error UntypedNil))
     then return: (![go.error] "err")
     else do:  #());;;
-    let: "$r0" := (![go.string] (StructFieldRef meta_v1.ObjectMeta "ResourceVersion"%go (StructFieldRef core_v1.Endpoints "ObjectMeta"%go (![go.PointerType core_v1.Endpoints] "current")))) in
-    do:  ((StructFieldRef meta_v1.ObjectMeta "ResourceVersion"%go (StructFieldRef core_v1.Endpoints "ObjectMeta"%go (![go.PointerType core_v1.Endpoints] "endpoints"))) <-[go.string] "$r0");;;
+    let: "$r0" := (![go.string] (StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "ResourceVersion"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Endpoints "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "current")))) in
+    do:  ((StructFieldRef code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta "ResourceVersion"%go (StructFieldRef code.k8s_io.api.core.v1.v1.Endpoints "ObjectMeta"%go (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "endpoints"))) <-[go.string] "$r0");;;
     let: ("$ret0", "$ret1") := (let: "$a0" := (![go.string] "namespace") in
-    let: "$a1" := (![go.PointerType core_v1.Endpoints] "endpoints") in
-    (MethodResolve (go.PointerType apimodel.State) "EndpointsUpdate"%go (![go.PointerType apimodel.State] (GlobalVarAddr apimodel.ModelState #()))) "$a0" "$a1") in
+    let: "$a1" := (![go.PointerType code.k8s_io.api.core.v1.v1.Endpoints] "endpoints") in
+    (MethodResolve (go.PointerType code.kubernetes_model.apimodel.apimodel.State) "EndpointsUpdate"%go (![go.PointerType code.kubernetes_model.apimodel.apimodel.State] (GlobalVarAddr code.kubernetes_model.apimodel.apimodel.ModelState #()))) "$a0" "$a1") in
     let: "$r0" := "$ret0" in
     let: "$r1" := "$ret1" in
     do:  "$r0";;;
@@ -238,18 +238,18 @@ Definition syncEndpointsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContex
 
 #[global] Instance info' : PkgInfo pkg_id.endpoint :=
 {|
-  pkg_imported_pkgs := [code.kubernetes_model.apimodel.pkg_id.apimodel; code.k8s_io.api.core.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.api.errors.pkg_id.errors; code.k8s_io.apimachinery.pkg.labels.pkg_id.labels; code.k8s_io.apimachinery.pkg.apis.meta.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.util.intstr.pkg_id.intstr]
+  pkg_imported_pkgs := [code.kubernetes_model.apimodel.pkg_id.apimodel; code.k8s_io.api.core.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.api.errors.pkg_id.errors; code.k8s_io.apimachinery.pkg.apis.meta.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.labels.pkg_id.labels; code.k8s_io.apimachinery.pkg.util.intstr.pkg_id.intstr]
 |}.
 
 Definition initialize' {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
   λ: <>,
     package.init pkg_id.endpoint (λ: <>,
-      exception_do (do:  (intstr.initialize' #());;;
-      do:  (meta_v1.initialize' #());;;
-      do:  (labels.initialize' #());;;
-      do:  (errors.initialize' #());;;
-      do:  (core_v1.initialize' #());;;
-      do:  (apimodel.initialize' #()))
+      exception_do (do:  (code.k8s_io.apimachinery.pkg.util.intstr.intstr.initialize' #());;;
+      do:  (code.k8s_io.apimachinery.pkg.labels.labels.initialize' #());;;
+      do:  (code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.initialize' #());;;
+      do:  (code.k8s_io.apimachinery.pkg.api.errors.errors.initialize' #());;;
+      do:  (code.k8s_io.api.core.v1.v1.initialize' #());;;
+      do:  (code.kubernetes_model.apimodel.apimodel.initialize' #()))
       ).
 
 Class Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
@@ -258,11 +258,11 @@ Class Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!G
   #[global] targetPort_unfold :: FuncUnfold targetPort [] (targetPortⁱᵐᵖˡ);
   #[global] buildEndpoints_unfold :: FuncUnfold buildEndpoints [] (buildEndpointsⁱᵐᵖˡ);
   #[global] syncEndpoints_unfold :: FuncUnfold syncEndpoints [] (syncEndpointsⁱᵐᵖˡ);
-  #[global] import_apimodel_Assumption :: apimodel.Assumptions;
-  #[global] import_core_v1_Assumption :: core_v1.Assumptions;
-  #[global] import_errors_Assumption :: errors.Assumptions;
-  #[global] import_labels_Assumption :: labels.Assumptions;
-  #[global] import_meta_v1_Assumption :: meta_v1.Assumptions;
-  #[global] import_intstr_Assumption :: intstr.Assumptions;
+  #[global] import_apimodel_Assumption :: code.kubernetes_model.apimodel.apimodel.Assumptions;
+  #[global] import_core_v1_Assumption :: code.k8s_io.api.core.v1.v1.Assumptions;
+  #[global] import_errors_Assumption :: code.k8s_io.apimachinery.pkg.api.errors.errors.Assumptions;
+  #[global] import_meta_v1_Assumption :: code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Assumptions;
+  #[global] import_labels_Assumption :: code.k8s_io.apimachinery.pkg.labels.labels.Assumptions;
+  #[global] import_intstr_Assumption :: code.k8s_io.apimachinery.pkg.util.intstr.intstr.Assumptions;
 }.
 End endpoint.

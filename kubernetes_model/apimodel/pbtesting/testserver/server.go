@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -58,6 +59,7 @@ func NewTestServer(cfg Config) (*TestServer, error) {
 
 		config, err = testEnv.Start()
 		if err != nil {
+			_ = testEnv.Stop()
 			return nil, fmt.Errorf("failed to start envtest: %w", err)
 		}
 	}
@@ -165,6 +167,11 @@ func (s *TestServer) UpdatePod(ctx context.Context, pod *corev1.Pod) (*corev1.Po
 	return s.client.CoreV1().Pods(s.namespace).Update(ctx, pod, metav1.UpdateOptions{})
 }
 
+// PatchPod patches a Pod in the test server.
+func (s *TestServer) PatchPod(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (*corev1.Pod, error) {
+	return s.client.CoreV1().Pods(s.namespace).Patch(ctx, name, patchType, data, metav1.PatchOptions{}, subresources...)
+}
+
 // UpdatePodStatus updates a Pod status in the test server.
 func (s *TestServer) UpdatePodStatus(ctx context.Context, pod *corev1.Pod) (*corev1.Pod, error) {
 	pod = pod.DeepCopy()
@@ -189,6 +196,11 @@ func (s *TestServer) UpdatePersistentVolumeClaim(ctx context.Context, pvc *corev
 	pvc = pvc.DeepCopy()
 	pvc.Namespace = s.namespace
 	return s.client.CoreV1().PersistentVolumeClaims(s.namespace).Update(ctx, pvc, metav1.UpdateOptions{})
+}
+
+// PatchPersistentVolumeClaim patches a PersistentVolumeClaim in the test server.
+func (s *TestServer) PatchPersistentVolumeClaim(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (*corev1.PersistentVolumeClaim, error) {
+	return s.client.CoreV1().PersistentVolumeClaims(s.namespace).Patch(ctx, name, patchType, data, metav1.PatchOptions{}, subresources...)
 }
 
 // UpdatePersistentVolumeClaimStatus updates a PVC status in the test server.
@@ -217,6 +229,11 @@ func (s *TestServer) UpdateReplicaSet(ctx context.Context, rs *appsv1.ReplicaSet
 	return s.client.AppsV1().ReplicaSets(s.namespace).Update(ctx, rs, metav1.UpdateOptions{})
 }
 
+// PatchReplicaSet patches a ReplicaSet in the test server.
+func (s *TestServer) PatchReplicaSet(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (*appsv1.ReplicaSet, error) {
+	return s.client.AppsV1().ReplicaSets(s.namespace).Patch(ctx, name, patchType, data, metav1.PatchOptions{}, subresources...)
+}
+
 // UpdateReplicaSetStatus updates a ReplicaSet status in the test server.
 func (s *TestServer) UpdateReplicaSetStatus(ctx context.Context, rs *appsv1.ReplicaSet) (*appsv1.ReplicaSet, error) {
 	rs = rs.DeepCopy()
@@ -243,6 +260,11 @@ func (s *TestServer) UpdateStatefulSet(ctx context.Context, sts *appsv1.Stateful
 	return s.client.AppsV1().StatefulSets(s.namespace).Update(ctx, sts, metav1.UpdateOptions{})
 }
 
+// PatchStatefulSet patches a StatefulSet in the test server.
+func (s *TestServer) PatchStatefulSet(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (*appsv1.StatefulSet, error) {
+	return s.client.AppsV1().StatefulSets(s.namespace).Patch(ctx, name, patchType, data, metav1.PatchOptions{}, subresources...)
+}
+
 // UpdateStatefulSetStatus updates a StatefulSet status in the test server.
 func (s *TestServer) UpdateStatefulSetStatus(ctx context.Context, sts *appsv1.StatefulSet) (*appsv1.StatefulSet, error) {
 	sts = sts.DeepCopy()
@@ -267,6 +289,11 @@ func (s *TestServer) UpdateDeployment(ctx context.Context, d *appsv1.Deployment)
 	d = d.DeepCopy()
 	d.Namespace = s.namespace
 	return s.client.AppsV1().Deployments(s.namespace).Update(ctx, d, metav1.UpdateOptions{})
+}
+
+// PatchDeployment patches a Deployment in the test server.
+func (s *TestServer) PatchDeployment(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (*appsv1.Deployment, error) {
+	return s.client.AppsV1().Deployments(s.namespace).Patch(ctx, name, patchType, data, metav1.PatchOptions{}, subresources...)
 }
 
 // UpdateDeploymentStatus updates a Deployment status in the test server.
@@ -303,6 +330,10 @@ func (s *TestServer) DeleteDeployment(ctx context.Context, name string, options 
 
 // Cleanup cleans up all resources created by the test server.
 func (s *TestServer) Cleanup(ctx context.Context) error {
+	// ControllerRevisions have no status subresource.
+	if err := s.client.AppsV1().ControllerRevisions(s.namespace).DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil {
+		return err
+	}
 	// Delete all pods in the namespace
 	if err := s.client.CoreV1().Pods(s.namespace).DeleteCollection(
 		ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil {
@@ -338,4 +369,33 @@ func (s *TestServer) Stop() error {
 		return s.testEnv.Stop()
 	}
 	return nil
+}
+
+// CreateControllerRevision creates a ControllerRevision in the test server.
+func (s *TestServer) CreateControllerRevision(ctx context.Context, d *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+	d = d.DeepCopy()
+	d.Namespace = s.namespace
+	return s.client.AppsV1().ControllerRevisions(s.namespace).Create(ctx, d, metav1.CreateOptions{})
+}
+
+// GetControllerRevision gets a ControllerRevision from the test server.
+func (s *TestServer) GetControllerRevision(ctx context.Context, name string) (*appsv1.ControllerRevision, error) {
+	return s.client.AppsV1().ControllerRevisions(s.namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
+// UpdateControllerRevision updates a ControllerRevision in the test server.
+func (s *TestServer) UpdateControllerRevision(ctx context.Context, d *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+	d = d.DeepCopy()
+	d.Namespace = s.namespace
+	return s.client.AppsV1().ControllerRevisions(s.namespace).Update(ctx, d, metav1.UpdateOptions{})
+}
+
+// PatchControllerRevision patches a ControllerRevision in the test server.
+func (s *TestServer) PatchControllerRevision(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (*appsv1.ControllerRevision, error) {
+	return s.client.AppsV1().ControllerRevisions(s.namespace).Patch(ctx, name, patchType, data, metav1.PatchOptions{}, subresources...)
+}
+
+// DeleteControllerRevision deletes a ControllerRevision from the test server with optional DeleteOptions.
+func (s *TestServer) DeleteControllerRevision(ctx context.Context, name string, options metav1.DeleteOptions) error {
+	return s.client.AppsV1().ControllerRevisions(s.namespace).Delete(ctx, name, options)
 }

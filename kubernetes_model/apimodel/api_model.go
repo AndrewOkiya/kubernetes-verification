@@ -29,11 +29,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	"k8s.io/kubernetes/pkg/apis/apps"
+	_ "k8s.io/kubernetes/pkg/apis/apps/install"
 	appsv1defaults "k8s.io/kubernetes/pkg/apis/apps/v1"
 	"k8s.io/kubernetes/pkg/apis/core"
 	corev1defaults "k8s.io/kubernetes/pkg/apis/core/v1"
 	"k8s.io/kubernetes/pkg/apis/rbac"
+	_ "k8s.io/kubernetes/pkg/apis/rbac/install"
 	"k8s.io/kubernetes/pkg/controller"
+	crstrategy "k8s.io/kubernetes/pkg/registry/apps/controllerrevision"
 	deploymentstrategy "k8s.io/kubernetes/pkg/registry/apps/deployment"
 	rsstrategy "k8s.io/kubernetes/pkg/registry/apps/replicaset"
 	stsstrategy "k8s.io/kubernetes/pkg/registry/apps/statefulset"
@@ -43,28 +46,26 @@ import (
 	servicestrategy "k8s.io/kubernetes/pkg/registry/core/service"
 	serviceaccountstrategy "k8s.io/kubernetes/pkg/registry/core/serviceaccount"
 	clusterrolestrategy "k8s.io/kubernetes/pkg/registry/rbac/clusterrole"
-	_ "k8s.io/kubernetes/pkg/apis/apps/install"
-	_ "k8s.io/kubernetes/pkg/apis/rbac/install"
 )
 
 // What's missing in this model:
 //
-// (1) Patch (JSON Patch, Merge Patch, Strategic Merge Patch)
+// (1) Server-side apply: client-go Apply(...) / ApplyStatus(...), or Patch(...) with
+//     types.ApplyPatchType (alias types.ApplyYAMLPatchType) / types.ApplyCBORPatchType.
+//     Patch(...) with types.JSONPatchType, types.MergePatchType, or types.StrategicMergePatchType is supported.
 //
-// (2) Transition validation during Update: validate that state transitions are valid (e.g., Phase changes)
-//
-// (3) API options, e.g., CreateOption / UpdateOptions
+// (2) API options, e.g., CreateOption / UpdateOptions
 //     Reference: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L579
 //
-// (4) Admission webhooks and admission plugins
+// (3) Admission webhooks and admission plugins
 //     - Validating webhooks: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/admission/plugin/webhook/validating/plugin.go
 //     - Mutating webhooks: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/admission/plugin/webhook/mutating/plugin.go
 //     - Built-in plugins: https://github.com/kubernetes/kubernetes/blob/release-1.34/pkg/kubeapiserver/admission/exclusion/resources.go
 //
-// (5) Warnings collection - Collects warnings during create/update (non-fatal issues)
+// (4) Warnings collection - Collects warnings during create/update (non-fatal issues)
 //     Reference: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/registry/rest/create.go#L133 (WarningsOnCreate)
 //
-// (6) BeginCreate/FinishCreate/AfterCreate hooks
+// (5) BeginCreate/FinishCreate/AfterCreate hooks
 //     Reference: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L490-L499
 //     Reference: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L551-L553
 
@@ -115,6 +116,8 @@ func deepCopy(obj interface{}) interface{} {
 	case *appsv1.Deployment:
 		return o.DeepCopy()
 	case *rbacv1.ClusterRole:
+		return o.DeepCopy()
+	case *appsv1.ControllerRevision:
 		return o.DeepCopy()
 	default:
 		panic(fmt.Sprintf("copyObject: unsupported type %T", obj))
@@ -454,6 +457,12 @@ func convertVersionedToLegacy(obj interface{}) (interface{}, error) {
 			return nil, errors.NewBadRequest(fmt.Sprintf("failed to convert rbacv1.ClusterRole to internal ClusterRole: %v", err))
 		}
 		return internalClusterRole, nil
+	case *appsv1.ControllerRevision:
+		internal := &apps.ControllerRevision{}
+		if err := legacyscheme.Scheme.Convert(typed, internal, nil); err != nil {
+			return nil, errors.NewBadRequest(fmt.Sprintf("failed to convert ControllerRevision: %v", err))
+		}
+		return internal, nil
 	default:
 		return nil, fmt.Errorf("unsupported versioned object type for conversion: %T", obj)
 	}
@@ -490,6 +499,8 @@ func applySchemaDefaults(obj interface{}) error {
 		appsv1defaults.SetObjectDefaults_Deployment(typed)
 	case *rbacv1.ClusterRole:
 		// ClusterRole has no schema defaults.
+	case *appsv1.ControllerRevision:
+		// ControllerRevision has no schema defaults.
 	default:
 		return fmt.Errorf("unsupported object type for schema defaults: %T", obj)
 	}
@@ -517,6 +528,8 @@ func applyStrategyPrepareForCreate(obj interface{}) error {
 		deploymentstrategy.Strategy.PrepareForCreate(ctx, typed)
 	case *rbac.ClusterRole:
 		clusterrolestrategy.Strategy.PrepareForCreate(ctx, typed)
+	case *apps.ControllerRevision:
+		crstrategy.Strategy.PrepareForCreate(ctx, typed)
 	default:
 		return fmt.Errorf("unsupported object type for strategy and validation: %T", obj)
 	}
@@ -546,6 +559,8 @@ func applyAdmissionMutate(obj interface{}) error {
 	case *apps.Deployment:
 		return nil
 	case *rbac.ClusterRole:
+		return nil
+	case *apps.ControllerRevision:
 		return nil
 	default:
 		return fmt.Errorf("unsupported object type for strategy and validation: %T", obj)
@@ -593,6 +608,8 @@ func applyPostPrepareCreateDefaults(obj interface{}) error {
 		return nil
 	case *rbac.ClusterRole:
 		return nil
+	case *apps.ControllerRevision:
+		return nil
 	default:
 		return fmt.Errorf("unsupported object type for post-prepare create defaults: %T", obj)
 	}
@@ -637,7 +654,7 @@ func applyAdmissionMutateForUpdate(obj, oldObj interface{}) error {
 			policy := *oldPod.Spec.PreemptionPolicy
 			typed.Spec.PreemptionPolicy = &policy
 		}
-	case *core.PersistentVolumeClaim:
+	case *core.PersistentVolumeClaim, *core.ServiceAccount:
 		return nil
 	case *core.Service:
 		return nil
@@ -650,6 +667,8 @@ func applyAdmissionMutateForUpdate(obj, oldObj interface{}) error {
 	case *apps.Deployment:
 		return nil
 	case *rbac.ClusterRole:
+		return nil
+	case *apps.ControllerRevision:
 		return nil
 	default:
 		return fmt.Errorf("unsupported object type for update admission mutation: %T", obj)
@@ -689,6 +708,8 @@ func applyAdmissionValidate(obj interface{}) error {
 	case *rbac.ClusterRole:
 		// This model does not mirror any ClusterRole-specific validating admission plugins.
 		return nil
+	case *apps.ControllerRevision:
+		return nil
 	default:
 		return fmt.Errorf("unsupported object type for admission validation: %T", obj)
 	}
@@ -696,8 +717,7 @@ func applyAdmissionValidate(obj interface{}) error {
 
 func allowUnconditionalUpdate(kind string) (bool, error) {
 	switch kind {
-	case "Pod", "PersistentVolumeClaim", "Service", "Endpoints", "ReplicaSet", "StatefulSet", "Deployment", "ClusterRole":
-		// These strategies return true from AllowUnconditionalUpdate() in release-1.34.
+	case "Pod", "PersistentVolumeClaim", "Service", "Endpoints", "ReplicaSet", "StatefulSet", "Deployment", "ControllerRevision", "ServiceAccount", "ClusterRole": // These strategies return true from AllowUnconditionalUpdate() in release-1.34.
 		// References:
 		// - https://github.com/kubernetes/kubernetes/blob/release-1.34/pkg/registry/core/pod/strategy.go#L157-L159
 		// - https://github.com/kubernetes/kubernetes/blob/release-1.34/pkg/registry/core/persistentvolumeclaim/strategy.go#L134-L136
@@ -711,20 +731,10 @@ func allowUnconditionalUpdate(kind string) (bool, error) {
 	}
 }
 
-func malformedUpdateResourceVersionError(err error) error {
-	return &errors.StatusError{ErrStatus: metav1.Status{
-		Status:  metav1.StatusFailure,
-		Code:    500,
-		Message: err.Error(),
-	}}
-}
-
-func parseResourceVersion(resourceVersion string) (uint64, error) {
-	return strconv.ParseUint(resourceVersion, 10, 64)
-}
-
 func updateStrategyForLegacyObject(obj interface{}) (rest.RESTUpdateStrategy, error) {
 	switch obj.(type) {
+	case *core.ServiceAccount:
+		return serviceaccountstrategy.Strategy, nil
 	case *core.Pod:
 		return podstrategy.Strategy, nil
 	case *core.PersistentVolumeClaim:
@@ -741,6 +751,8 @@ func updateStrategyForLegacyObject(obj interface{}) (rest.RESTUpdateStrategy, er
 		return deploymentstrategy.Strategy, nil
 	case *rbac.ClusterRole:
 		return clusterrolestrategy.Strategy, nil
+	case *apps.ControllerRevision:
+		return crstrategy.Strategy, nil
 	default:
 		return nil, fmt.Errorf("unsupported object type for update strategy: %T", obj)
 	}
@@ -804,6 +816,10 @@ func applyStrategyValidate(obj interface{}, name string) error {
 		if errs := clusterrolestrategy.Strategy.Validate(ctx, typed); len(errs) > 0 {
 			return errors.NewInvalid(schema.GroupKind{Group: "rbac.authorization.k8s.io", Kind: "ClusterRole"}, name, errs)
 		}
+	case *apps.ControllerRevision:
+		if errs := crstrategy.Strategy.Validate(ctx, typed); len(errs) > 0 {
+			return errors.NewInvalid(schema.GroupKind{Group: "apps", Kind: "ControllerRevision"}, name, errs)
+		}
 	default:
 		return fmt.Errorf("unsupported object type for strategy and validation: %T", obj)
 	}
@@ -830,6 +846,8 @@ func applyStrategyCanonicalize(obj interface{}) error {
 		deploymentstrategy.Strategy.Canonicalize(typed)
 	case *rbac.ClusterRole:
 		clusterrolestrategy.Strategy.Canonicalize(typed)
+	case *apps.ControllerRevision:
+		crstrategy.Strategy.Canonicalize(typed)
 	default:
 		return fmt.Errorf("unsupported object type for strategy and validation: %T", obj)
 	}
@@ -1072,6 +1090,12 @@ func (s *State) update(kind, namespace string, obj interface{}) (interface{}, er
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return s.updateLocked(kind, namespace, obj, true)
+}
+
+// updateLocked requires s.mu to be held.
+func (s *State) updateLocked(kind, namespace string, obj interface{}, uidPrecondition bool) (interface{}, error) {
+
 	objCopy := deepCopy(obj)
 
 	metadata, err := meta.Accessor(objCopy)
@@ -1105,9 +1129,13 @@ func (s *State) update(kind, namespace string, obj interface{}) (interface{}, er
 		return nil, fmt.Errorf("failed to access existing object metadata: %w", err)
 	}
 
-	// A non-empty UID on the incoming object acts like a storage precondition in the real update path.
-	if uid := metadata.GetUID(); uid != "" && uid != existingMetadata.GetUID() {
-		return nil, newUpdateUIDConflictError(kind, name, existingMetadata.GetUID(), uid)
+	// PUT supplies a UID storage precondition; PATCH validates UID immutability instead.
+	if uid := metadata.GetUID(); uidPrecondition && uid != "" && uid != existingMetadata.GetUID() {
+		return nil, errors.NewConflict(
+			schema.GroupResource{Resource: kind},
+			name,
+			fmt.Errorf("UID mismatch: expected %q, got %q", existingMetadata.GetUID(), uid),
+		)
 	}
 
 	rv := metadata.GetResourceVersion()
@@ -1133,14 +1161,22 @@ func (s *State) update(kind, namespace string, obj interface{}) (interface{}, er
 		// resourceVersion before optimistic-lock comparison. A malformed value therefore
 		// fails before it can become a normal stale-resourceVersion conflict.
 		// Reference: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L659-L666
-		if _, err = parseResourceVersion(rv); err != nil {
-			return nil, malformedUpdateResourceVersionError(err)
+		if _, err = strconv.ParseUint(rv, 10, 64); err != nil {
+			return nil, &errors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    500,
+				Message: err.Error(),
+			}}
 		}
 	}
 
 	rv = metadata.GetResourceVersion()
 	if rv != existingRv {
-		return nil, newUpdateResourceVersionConflictError(kind, name, existingRv, rv)
+		return nil, errors.NewConflict(
+			schema.GroupResource{Resource: kind},
+			name,
+			fmt.Errorf("resourceVersion mismatch: expected %q, got %q", existingRv, rv),
+		)
 	}
 
 	if err = applyValidationAndDefaultingOnUpdate(objCopy, existingObjCopy, namespace); err != nil {
@@ -1171,6 +1207,12 @@ func (s *State) update(kind, namespace string, obj interface{}) (interface{}, er
 func (s *State) updateStatus(kind, namespace string, obj interface{}) (interface{}, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	return s.updateStatusLocked(kind, namespace, obj, true)
+}
+
+// updateStatusLocked requires s.mu to be held.
+func (s *State) updateStatusLocked(kind, namespace string, obj interface{}, uidPrecondition bool) (interface{}, error) {
 
 	objCopy := deepCopy(obj)
 
@@ -1205,8 +1247,12 @@ func (s *State) updateStatus(kind, namespace string, obj interface{}) (interface
 		return nil, fmt.Errorf("failed to access existing object metadata: %w", err)
 	}
 
-	if uid := metadata.GetUID(); uid != "" && uid != existingMetadata.GetUID() {
-		return nil, newUpdateUIDConflictError(kind, name, existingMetadata.GetUID(), uid)
+	if uid := metadata.GetUID(); uidPrecondition && uid != "" && uid != existingMetadata.GetUID() {
+		return nil, errors.NewConflict(
+			schema.GroupResource{Resource: kind},
+			name,
+			fmt.Errorf("UID mismatch: expected %q, got %q", existingMetadata.GetUID(), uid),
+		)
 	}
 
 	rv := metadata.GetResourceVersion()
@@ -1226,14 +1272,22 @@ func (s *State) updateStatus(kind, namespace string, obj interface{}) (interface
 		}
 		metadata.SetResourceVersion(existingRv)
 	} else {
-		if _, err = parseResourceVersion(rv); err != nil {
-			return nil, malformedUpdateResourceVersionError(err)
+		if _, err = strconv.ParseUint(rv, 10, 64); err != nil {
+			return nil, &errors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    500,
+				Message: err.Error(),
+			}}
 		}
 	}
 
 	rv = metadata.GetResourceVersion()
 	if rv != existingRv {
-		return nil, newUpdateResourceVersionConflictError(kind, name, existingRv, rv)
+		return nil, errors.NewConflict(
+			schema.GroupResource{Resource: kind},
+			name,
+			fmt.Errorf("resourceVersion mismatch: expected %q, got %q", existingRv, rv),
+		)
 	}
 
 	if err = applyValidationAndDefaultingOnStatusUpdate(objCopy, existingObjCopy, namespace); err != nil {
@@ -1370,38 +1424,6 @@ func deletionFinalizersForGarbageCollection(metadata metav1.Object, options *met
 	return false, oldFinalizers
 }
 
-func newPreconditionUIDConflictError(kind string, name string, preconditionUID string, uid string) error {
-	return errors.NewConflict(
-		schema.GroupResource{Resource: kind},
-		name,
-		fmt.Errorf("the UID in the precondition (%s) does not match the UID in record (%s). The object might have been deleted and then recreated",
-			preconditionUID, uid))
-}
-
-func newUpdateUIDConflictError(kind string, name string, existingUID types.UID, uid types.UID) error {
-	return errors.NewConflict(
-		schema.GroupResource{Resource: kind},
-		name,
-		fmt.Errorf("UID mismatch: expected %q, got %q", existingUID, uid),
-	)
-}
-
-func newUpdateResourceVersionConflictError(kind string, name string, existingResourceVersion string, resourceVersion string) error {
-	return errors.NewConflict(
-		schema.GroupResource{Resource: kind},
-		name,
-		fmt.Errorf("resourceVersion mismatch: expected %q, got %q", existingResourceVersion, resourceVersion),
-	)
-}
-
-func newPreconditionRVConflictError(kind string, name string, preconditionRV string, rv string) error {
-	return errors.NewConflict(
-		schema.GroupResource{Resource: kind},
-		name,
-		fmt.Errorf("the ResourceVersion in the precondition (%s) does not match the ResourceVersion in record (%s). The object might have been modified",
-			preconditionRV, rv))
-}
-
 // validateDeleteOptions checks structural DeleteOptions validation that upstream performs in BeforeDelete.
 // Reference: https://github.com/kubernetes/kubernetes/blob/release-1.34/staging/src/k8s.io/apiserver/pkg/registry/rest/delete.go#L80-L81
 func validateDeleteOptions(options *metav1.DeleteOptions) error {
@@ -1426,16 +1448,24 @@ func validateDeletePreconditions(metadata metav1.Object, options *metav1.DeleteO
 	// Check UID precondition
 	if options.Preconditions.UID != nil {
 		if *options.Preconditions.UID != metadata.GetUID() {
-			return newPreconditionUIDConflictError(kind, metadata.GetName(),
-				string(*options.Preconditions.UID), string(metadata.GetUID()))
+			return errors.NewConflict(
+				schema.GroupResource{Resource: kind},
+				metadata.GetName(),
+				fmt.Errorf("the UID in the precondition (%s) does not match the UID in record (%s). The object might have been deleted and then recreated",
+					string(*options.Preconditions.UID), string(metadata.GetUID())),
+			)
 		}
 	}
 
 	// Check ResourceVersion precondition
 	if options.Preconditions.ResourceVersion != nil {
 		if *options.Preconditions.ResourceVersion != metadata.GetResourceVersion() {
-			return newPreconditionRVConflictError(kind, metadata.GetName(),
-				string(*options.Preconditions.ResourceVersion), string(metadata.GetResourceVersion()))
+			return errors.NewConflict(
+				schema.GroupResource{Resource: kind},
+				metadata.GetName(),
+				fmt.Errorf("the ResourceVersion in the precondition (%s) does not match the ResourceVersion in record (%s). The object might have been modified",
+					string(*options.Preconditions.ResourceVersion), string(metadata.GetResourceVersion())),
+			)
 		}
 	}
 
@@ -1532,6 +1562,8 @@ func checkGracefulDelete(obj interface{}, options *metav1.DeleteOptions) (bool, 
 		return false, false, nil
 	case *appsv1.StatefulSet:
 		// StatefulSets don't support graceful deletion
+		return false, false, nil
+	case *appsv1.ControllerRevision:
 		return false, false, nil
 	case *appsv1.Deployment:
 		// Deployments don't support graceful deletion
@@ -2455,4 +2487,86 @@ func (s *State) ClusterRoleUpdate(cr *rbacv1.ClusterRole) (*rbacv1.ClusterRole, 
 	}
 
 	return updatedCR, nil
+}
+
+// Returned value must be treated as read-only.
+func (s *State) ControllerRevisionGet(namespace, name string) (*appsv1.ControllerRevision, error) {
+	return s.ControllerRevisionMutGet(namespace, name)
+}
+
+func (s *State) ControllerRevisionMutGet(namespace, name string) (*appsv1.ControllerRevision, error) {
+	key := KKey{
+		Kind:      "ControllerRevision",
+		Namespace: namespace,
+		Name:      name,
+	}
+
+	obj, err := s.get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	ss, ok := obj.(*appsv1.ControllerRevision)
+	if !ok {
+		// This should never happen
+		return nil, fmt.Errorf("state entry for controllerrevision %s/%s is not a *v1.ControllerRevision", namespace, name)
+	}
+
+	return ss, nil
+}
+
+// Returned value must be treated as read-only.
+func (s *State) ControllerRevisionList(namespace string, selector labels.Selector) ([]*appsv1.ControllerRevision, error) {
+	return s.ControllerRevisionMutList(namespace, selector)
+}
+
+func (s *State) ControllerRevisionMutList(namespace string, selector labels.Selector) ([]*appsv1.ControllerRevision, error) {
+	objs, err := s.objListBySelector("ControllerRevision", namespace, selector)
+	if err != nil {
+		return nil, err
+	}
+
+	sets := make([]*appsv1.ControllerRevision, 0, len(objs))
+	for _, obj := range objs {
+		set, ok := obj.(*appsv1.ControllerRevision)
+		if !ok {
+			return nil, fmt.Errorf("state entry is not a *v1.ControllerRevision")
+		}
+		sets = append(sets, set)
+	}
+
+	return sets, nil
+}
+
+func (s *State) ControllerRevisionCreate(namespace string, ss *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+	obj, err := s.create("ControllerRevision", namespace, ss)
+	if err != nil {
+		return nil, err
+	}
+
+	createdSS, ok := obj.(*appsv1.ControllerRevision)
+	if !ok {
+		return nil, fmt.Errorf("create returned unexpected type %T", obj)
+	}
+
+	return createdSS, nil
+}
+
+func (s *State) ControllerRevisionUpdate(namespace string, ss *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+	obj, err := s.update("ControllerRevision", namespace, ss)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedSS, ok := obj.(*appsv1.ControllerRevision)
+	if !ok {
+		return nil, fmt.Errorf("update returned unexpected type %T", obj)
+	}
+
+	return updatedSS, nil
+}
+
+func (s *State) ControllerRevisionDelete(namespace, name string, options metav1.DeleteOptions) error {
+	key := KKey{Kind: "ControllerRevision", Namespace: namespace, Name: name}
+	return s.delete(key, options)
 }

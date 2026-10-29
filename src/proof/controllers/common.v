@@ -1,3 +1,4 @@
+From New.proof Require Import wp_keep.
 From New.proof Require Import prelude empty_ffi.
 From New.proof.kubernetes_model Require Export by_index_pod_controller.
 From New.proof Require Export util.
@@ -6,6 +7,10 @@ From New.proof.k8s_io.kubernetes.pkg Require Export controller.
 From New.proof.k8s_io.apimachinery.pkg.runtime Require Export schema.
 From New.proof.k8s_io.apimachinery.pkg.api Require Export errors.
 
+
+Local Transparent ObjectMetaV.deepown ObjectMetaView.ObjectMetaV.deepown.
+(* These helpers preserve timestamps without inspecting their ownership. *)
+Local Opaque TimeV.deepown TimeView.TimeV.deepown TimeView.LocationV.deepown.
 Section proof.
 Context `{hG: !heapGS Σ} `{!ffi_semantics _ _}.
 Context {sem : go.Semantics} {package_sem : common.Assumptions}.
@@ -25,6 +30,7 @@ Local Set Default Proof Using "All".
 Definition is_pod_alive (pod: PodV.t): Prop :=
   pod.(PodV.ObjectMeta').(ObjectMetaV.DeletionTimestamp') = None.
 
+
 Definition delete_options_with_uid (uid : types.UID.t) : DeleteOptionsV.t :=
   {|
     DeleteOptionsV.TypeMeta' := zero_val _;
@@ -35,6 +41,8 @@ Definition delete_options_with_uid (uid : types.UID.t) : DeleteOptionsV.t :=
     |};
     DeleteOptionsV.OrphanDependents' := None;
     DeleteOptionsV.PropagationPolicy' := None;
+    DeleteOptionsV.DryRun' := None;
+    DeleteOptionsV.IgnoreStoreReadErrorWithClusterBreakingPotential' := None;
   |}.
 
 Lemma wp_NewDeleteOptionsWithUID uid :
@@ -47,15 +55,18 @@ Lemma wp_NewDeleteOptionsWithUID uid :
 Proof.
   wp_start as "H".
   wp_alloc uid_ptr as "Huid_ptr".
-  wp_auto.
+  wp_auto_keep.
   wp_alloc preconditions_ptr as "Hpreconditions_ptr".
-  wp_auto.
+  wp_auto_keep.
   iAssert (⌜ uid_ptr ≠ null ⌝%I) as "%Huid_ptr_not_null".
   { iDestruct (typed_pointsto_not_null with "Huid_ptr") as %Huid_ptr_not_null. done. }
   iAssert (⌜ preconditions_ptr ≠ null ⌝%I) as "%Hpreconditions_ptr_not_null".
   { iDestruct (typed_pointsto_not_null with "Hpreconditions_ptr") as %Hpreconditions_ptr_not_null. done. }
   iApply "HΦ".
   rewrite /delete_options_with_uid /DeleteOptionsV.deepown /PreconditionsV.deepown /=.
+  iPoseProof (own_slice_nil (V:=go_string) (DfracOwn 1)) as "Hdryrun".
+  iPoseProof (own_slice_cap_nil (V:=go_string)) as "Hdryrun_cap".
+  iFrame "Hdryrun Hdryrun_cap".
   iFrame.
   iPureIntro.
   split_and!; try done.
@@ -71,18 +82,20 @@ Proof.
   rewrite Hdeepown_deletiontimestamp_none. done.
 Qed.
 
-Lemma wp_FilterActivePods sl ptrs pods dq :
+(* The input slice is only read, so it may be shared ([dq_sl]) and is returned. *)
+Lemma wp_FilterActivePods sl dq_sl ptrs pods dq :
   {{{ is_pkg_init code.controllers.common.pkg_id.common ∗
-      "Hsl" ∷ sl ↦* ptrs ∗
+      "Hsl" ∷ sl ↦*{dq_sl} ptrs ∗
       "Hdeepown_l_pods" ∷ ([∗ list] ptr;pod ∈ ptrs;pods, PodV.deepown_l ptr pod dq)
   }}}
     @! common.FilterActivePods #sl
   {{{ sl' ptrs', RET #sl';
       sl' ↦* ptrs' ∗
-      ([∗ list] ptr;pod ∈ ptrs';filter is_pod_alive pods, PodV.deepown_l ptr pod dq)
+      ([∗ list] ptr;pod ∈ ptrs';filter is_pod_alive pods, PodV.deepown_l ptr pod dq) ∗
+      sl ↦*{dq_sl} ptrs
   }}}.
 Proof.
-  wp_start as "H". iNamed "H". wp_auto.
+  wp_start as "H". iNamed "H". wp_auto_keep.
   iPoseProof own_slice_nil as "Hslice_nil".
   iPoseProof own_slice_cap_nil as "Hown_slice_nil_cap".
   iDestruct (own_slice_len with "Hsl") as %(Hsl_len1 & Hsl_len2).
@@ -104,36 +117,30 @@ Proof.
   { iExists (W64 0), (zero_val loc), slice.nil, [].
     iFrame. iFrame "#".
     rewrite !take_0 !filter_nil !big_sepL2_nil. done. }
-  wp_for "Hloop_inv".
-  wp_if_destruct.
+  wp_for_keep "Hloop_inv".
+  wp_if_destruct_keep.
   - list_elem ptrs (sint.Z i) as this_ptr.
     destruct (decide (0 ≤ sint.Z i < sint.Z (slice.len sl))) as [_|Hbounds]; last word.
-    wp_apply (wp_load_slice_index with "[$Hsl]"); [word| |].
+    wp_apply_keep (wp_load_slice_index with "[$Hsl]"); [word| |].
     { iPureIntro. exact Hthis_ptr_lookup. }
-    iIntros "Hsl". wp_auto.
+    iIntros "Hsl". wp_auto_keep.
     assert (∃ this_pod, pods !! sint.nat i = Some this_pod) as [this_pod Hthis_pod_lookup].
     { apply lookup_lt_is_Some_2. rewrite -Hlen Hsl_len1. word. }
     iPoseProof (big_sepL2_head_tail _ _ _ this_ptr this_pod with "Hlist_post") as "[Hthis Hother]".
     { split. all: rewrite lookup_drop Nat.add_0_r; done. }
     iDestruct "Hthis" as (this_pod_c) "[Hthis_ptr Hthis_pod]".
     iDestruct (deepown_preserves_deletion_timestamp_activeness with "Hthis_pod") as %Hactive.
-    iDestruct (struct_fields_split with "Hthis_ptr") as "[Hthis_fields %Hthis_ptr_not_null]".
-    iNamedPrefix "Hthis_fields" "H".
-    wp_auto.
-    wp_if_destruct.
+    (* Read the nested metadata field through its lens, preserving the Pod. *)
+    wp_auto_keep.
+    wp_if_destruct_keep.
     + assert (is_pod_alive this_pod) as Hpod_active.
       { apply Hactive. done. }
-      wp_apply wp_slice_literal. iSplitR; first done. iIntros (sl0) "[Hsl0 _]". wp_auto.
-      wp_apply (wp_slice_append with "[$Hresult $Hown_result_cap $Hsl0]").
-      iIntros (result') "(Hresult & Hown_result_cap & Hsl0)". wp_auto.
-      iAssert (typed_pointsto_def this_ptr this_pod_c dq)
-        with "[HTypeMeta HObjectMeta HSpec HStatus]" as "Hthis_fields".
-      { simpl. rewrite /named. iFrame. }
-      iDestruct (struct_fields_combine (V:=v1.Pod.t)
-        this_ptr this_pod_c dq Hthis_ptr_not_null with "Hthis_fields") as "Hthis_ptr".
+      wp_apply_keep wp_slice_literal. iSplitR; first done. iIntros (sl0) "[Hsl0 _]". wp_auto_keep.
+      wp_apply_keep (wp_slice_append with "[$Hresult $Hown_result_cap $Hsl0]").
+      iIntros (result') "(Hresult & Hown_result_cap & Hsl0)". wp_auto_keep.
       iAssert (PodV.deepown_l this_ptr this_pod dq) with "[Hthis_ptr Hthis_pod]" as "Hthis".
       { iExists this_pod_c. iFrame. }
-      iApply wp_for_post_do. wp_auto.
+      iApply wp_for_post_do. wp_auto_keep.
       iFrame "Hsl HΦ".
       iExists (word.add i (W64 1)), this_ptr, result', (ptrs' ++ [this_ptr]).
       assert (filter is_pod_alive (take (sint.nat i) pods) ++ [this_pod] =
@@ -148,14 +155,9 @@ Proof.
     + assert (¬ is_pod_alive this_pod) as Hpod_active.
       { intros Hpod_active.
         apply Hactive in Hpod_active. done. }
-      iAssert (typed_pointsto_def this_ptr this_pod_c dq)
-        with "[HTypeMeta HObjectMeta HSpec HStatus]" as "Hthis_fields".
-      { simpl. rewrite /named. iFrame. }
-      iDestruct (struct_fields_combine (V:=v1.Pod.t)
-        this_ptr this_pod_c dq Hthis_ptr_not_null with "Hthis_fields") as "Hthis_ptr".
       iAssert (PodV.deepown_l this_ptr this_pod dq) with "[Hthis_ptr Hthis_pod]" as "Hthis".
       { iExists this_pod_c. iFrame. }
-      iApply wp_for_post_do. wp_auto.
+      iApply wp_for_post_do. wp_auto_keep.
       iFrame "Hsl HΦ".
       iExists (word.add i (W64 1)), this_ptr, result, ptrs'.
       assert (filter is_pod_alive (take (sint.nat i) pods) =
@@ -181,7 +183,7 @@ Definition owner_ref_key (owner_kind : go_string) (owner_meta : ObjectMetaV.t) :
 |}.
 
 Lemma wp_FilterPodsByOwner γ l owner owner_kind meta dq1
-    living_pods pod_dqs children_dq children_keys has_terminating_children :
+    living_pods pod_dqs children_dq children_keys terminating_bound :
   {{{ is_pkg_init code.controllers.common.pkg_id.common ∗
       "#Hisk" ∷ is_kubernetes γ l ∗
       "#Hglobal_l" ∷ (global_addr apimodel.ModelState) ↦□ l ∗
@@ -195,7 +197,7 @@ Lemma wp_FilterPodsByOwner γ l owner owner_kind meta dq1
           meta.(ObjectMetaV.UID') children_dq children_keys ∗
       "Hown_terminating_children_frag" ∷
         own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-          meta.(ObjectMetaV.UID') has_terminating_children ∗
+          meta.(ObjectMetaV.UID') terminating_bound ∗
       "%Hnodup" ∷ ⌜ NoDup (PodV.key <$> living_pods) ⌝ ∗
       "%Hdom_eq" ∷ ⌜ list_to_set (PodV.key <$> living_pods) =
         filter (λ key, key.(KKey.Kind') = "Pod"%go) children_keys ⌝ ∗
@@ -210,11 +212,12 @@ Lemma wp_FilterPodsByOwner γ l owner owner_kind meta dq1
       ([∗ list] ptr;pod ∈ ptrs;all_pods, PodV.deepown_l ptr pod dq') ∗
       ⌜ ObjectMetaV.without_resource_version <$> (PodV.ObjectMeta' <$> filter is_pod_alive all_pods) ≡ₚ
         ObjectMetaV.without_resource_version <$> (PodV.ObjectMeta' <$> living_pods) ⌝ ∗
-      ⌜ has_terminating_children = terminating_children.No →
+      ⌜ terminating_bound = 0%nat →
         ObjectMetaV.without_resource_version <$> (PodV.ObjectMeta' <$> all_pods) ≡ₚ
           ObjectMetaV.without_resource_version <$> (PodV.ObjectMeta' <$> living_pods) ⌝ ∗
       ⌜ Forall PodV.valid all_pods ⌝ ∗
       ⌜ NoDup (PodV.key <$> all_pods) ⌝ ∗
+      ⌜ (length all_pods ≤ length living_pods + terminating_bound)%nat ⌝ ∗
       ObjectMetaV.deepown_l owner meta dq1 ∗
       ([∗ list] pod ∈ terminating_pods all_pods,
         own_deletion_observed_frag γ (PodV.key pod) pod.(PodV.ObjectMeta').(ObjectMetaV.UID')) ∗
@@ -225,25 +228,25 @@ Lemma wp_FilterPodsByOwner γ l owner owner_kind meta dq1
       own_children_frag γ (owner_ref_key owner_kind meta)
         meta.(ObjectMetaV.UID') children_dq children_keys ∗
       own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-        meta.(ObjectMetaV.UID') has_terminating_children
+        meta.(ObjectMetaV.UID') terminating_bound
   }}}.
 Proof.
-  wp_start as "H". iNamed "H". subst. wp_auto.
+  wp_start as "H". iNamed "H". subst. wp_auto_keep.
   iDestruct "Hdeepown_l_meta" as "(%meta_c & Howner & Hdeepown_meta)".
-  wp_apply wp_slice_literal. iSplitR; first done.
+  wp_apply_keep wp_slice_literal. iSplitR; first done.
   iIntros (result_sl) "[Hresult_sl Hown_result_cap]".
   set result0 := {|
     slice.ptr := result_sl;
     slice.len := W64 (go.array_literal_size []);
     slice.cap := W64 (go.array_literal_size []);
   |}.
-  wp_auto.
-  wp_alloc owner_reference as "Howner_reference". wp_auto.
-  wp_apply (controller.wp_PodControllerIndexKey with "[$Howner_reference]").
-  iIntros (index_key) "->". wp_auto.
+  wp_auto_keep.
+  wp_alloc owner_reference as "Howner_reference". wp_auto_keep.
+  wp_apply_keep (controller.wp_PodControllerIndexKey with "[$Howner_reference]").
+  iIntros (index_key) "->". wp_auto_keep.
   iNamedPrefix "Hdeepown_meta" "Htemp_".
-  wp_apply (wp_State__ByIndex_podController_combined
-    _ _ _ _ pod_dqs _ _ _ children_dq has_terminating_children
+  wp_apply_keep (wp_State__ByIndex_podController_combined
+    _ _ _ _ pod_dqs _ _ _ children_dq terminating_bound
     with "[$Hown_pod_meta_frags $Hown_children_frag
       $Hown_terminating_children_frag]").
   { iFrame "#". iFrame "%". iPureIntro. rewrite Htemp_Hdeepown_namespace. rewrite Htemp_Hdeepown_name.
@@ -251,7 +254,7 @@ Proof.
   iCombineNamed "Htemp_*" as "H".
   iAssert (ObjectMetaV.deepown meta_c meta dq1) with "[H]" as "Hdeepown_meta".
   { iNamed "H". iFrame. done. }
-  iIntros (sl interfaces pods' dq') "H". iNamedPrefix "H" "Hindex_". wp_auto.
+  iIntros (sl interfaces pods' dq') "H". iNamedPrefix "H" "Hindex_". wp_auto_keep.
   iDestruct (own_slice_len with "Hindex_Hsl") as %(Hsl_len1 & Hsl_len2).
   iDestruct (own_slice_wf with "Hindex_Hsl") as %Hsl_cap.
   iDestruct (big_sepL2_length with "Hindex_Hpods") as %Hlen.
@@ -274,17 +277,17 @@ Proof.
       + iExactEq "Hindex_Hpods". reflexivity.
       + iPureIntro. word.
   }
-  wp_for "Hloop_inv".
-  wp_if_destruct.
+  wp_for_keep "Hloop_inv".
+  wp_if_destruct_keep.
   - assert (∃ this_interface, interfaces !! sint.nat i = Some this_interface) as
       [this_interface Hthis_interface_lookup].
     { apply lookup_lt_is_Some_2.
       rewrite <- (map_length interface.ok interfaces).
       rewrite Hsl_len1. word. }
     destruct (decide (0 ≤ sint.Z i < sint.Z (slice.len sl))) as [_|Hbounds]; last word.
-    wp_apply (wp_load_slice_index with "[$Hindex_Hsl]"); [word| |].
+    wp_apply_keep (wp_load_slice_index with "[$Hindex_Hsl]"); [word| |].
     { iPureIntro. rewrite list_lookup_fmap Hthis_interface_lookup. done. }
-    iIntros "Hindex_Hsl". wp_auto.
+    iIntros "Hindex_Hsl". wp_auto_keep.
     assert (∃ this_pod, pods' !! sint.nat i = Some this_pod) as [this_pod Hthis_this_ptrookup].
     { apply lookup_lt_is_Some_2.
       pose proof (lookup_lt_Some _ _ _ Hthis_interface_lookup) as Hlt.
@@ -295,13 +298,13 @@ Proof.
     unfold KObjectV.valid_interface in Hthis_i.
     destruct Hthis_i as [Hthis_i _]. rewrite Hthis_i.
     rewrite decide_True; [change (go.PointerType common.core_v1.Pod) with (go.PointerType v1.Pod); reflexivity|].
-    wp_auto.
+    wp_auto_keep.
     rewrite bool_decide_true; [change (go.PointerType common.core_v1.Pod) with (go.PointerType v1.Pod); reflexivity|].
-    wp_auto.
-    wp_apply wp_slice_literal. iSplitR; first done. iIntros (sl0) "[Hsl0 _]". wp_auto.
-    wp_apply (wp_slice_append with "[$Hresult $Hown_result_cap $Hsl0]").
-    iIntros (result') "(Hresult & Hown_result_cap & Hsl0)". wp_auto.
-    iApply wp_for_post_do. wp_auto.
+    wp_auto_keep.
+    wp_apply_keep wp_slice_literal. iSplitR; first done. iIntros (sl0) "[Hsl0 _]". wp_auto_keep.
+    wp_apply_keep (wp_slice_append with "[$Hresult $Hown_result_cap $Hsl0]").
+    iIntros (result') "(Hresult & Hown_result_cap & Hsl0)". wp_auto_keep.
+    iApply wp_for_post_do. wp_auto_keep.
     iAssert (I) with "[Hi_ptr Hresult Hresult_ptr Hobj Hown_result_cap Hother_i_pod Hdeepown_l Hdeepown_l_pods]" as
       "Hloop_inv".
     { iExists (word.add i (W64 1)), result', (ptrs ++ [this_ptr]). iFrame. iSplitR "Hother_i_pod". 2: iSplitL.
@@ -323,7 +326,7 @@ Proof.
 Qed.
 
 Lemma wp_FilterPodsByOwner_with_spec γ l owner owner_kind meta dq1
-    living_pods pod_dqs children_dq children_keys has_terminating_children :
+    living_pods pod_dqs children_dq children_keys terminating_bound :
   {{{ is_pkg_init code.controllers.common.pkg_id.common ∗
       "#Hisk" ∷ is_kubernetes γ l ∗
       "#Hglobal_l" ∷ (global_addr apimodel.ModelState) ↦□ l ∗
@@ -340,7 +343,7 @@ Lemma wp_FilterPodsByOwner_with_spec γ l owner owner_kind meta dq1
           meta.(ObjectMetaV.UID') children_dq children_keys ∗
       "Hown_terminating_children_frag" ∷
         own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-          meta.(ObjectMetaV.UID') has_terminating_children ∗
+          meta.(ObjectMetaV.UID') terminating_bound ∗
       "%Hnodup" ∷ ⌜ NoDup (PodV.key <$> living_pods) ⌝ ∗
       "%Hdom_eq" ∷ ⌜ list_to_set (PodV.key <$> living_pods) =
         filter (λ key, key.(KKey.Kind') = "Pod"%go) children_keys ⌝ ∗
@@ -356,7 +359,7 @@ Lemma wp_FilterPodsByOwner_with_spec γ l owner owner_kind meta dq1
         PodV.deepown_l ptr pod dq') ∗
       ⌜ pod_storage_view <$> filter is_pod_alive pods' ≡ₚ
         pod_storage_view <$> living_pods ⌝ ∗
-      ⌜ has_terminating_children = terminating_children.No →
+      ⌜ terminating_bound = 0%nat →
         pod_storage_view <$> pods' ≡ₚ pod_storage_view <$> living_pods ⌝ ∗
       ⌜ Forall PodV.valid pods' ⌝ ∗
       ⌜ Forall (λ pod,
@@ -377,29 +380,29 @@ Lemma wp_FilterPodsByOwner_with_spec γ l owner owner_kind meta dq1
       own_children_frag γ (owner_ref_key owner_kind meta)
         meta.(ObjectMetaV.UID') children_dq children_keys ∗
       own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-        meta.(ObjectMetaV.UID') has_terminating_children
+        meta.(ObjectMetaV.UID') terminating_bound
   }}}.
 Proof.
-  wp_start as "H". iNamed "H". subst. wp_auto.
+  wp_start as "H". iNamed "H". subst. wp_auto_keep.
   iDestruct "Hdeepown_l_meta" as
     "(%meta_c & Howner & Hdeepown_meta)".
-  wp_apply wp_slice_literal. iSplitR; first done.
+  wp_apply_keep wp_slice_literal. iSplitR; first done.
   iIntros (result_sl) "[Hresult_sl Hown_result_cap]".
   set result0 := {|
     slice.ptr := result_sl;
     slice.len := W64 (go.array_literal_size []);
     slice.cap := W64 (go.array_literal_size []);
   |}.
-  wp_auto.
-  wp_alloc owner_reference as "Howner_reference". wp_auto.
-  wp_apply (controller.wp_PodControllerIndexKey with
+  wp_auto_keep.
+  wp_alloc owner_reference as "Howner_reference". wp_auto_keep.
+  wp_apply_keep (controller.wp_PodControllerIndexKey with
     "[$Howner_reference]").
-  iIntros (index_key) "->". wp_auto.
+  iIntros (index_key) "->". wp_auto_keep.
   iNamedPrefix "Hdeepown_meta" "Htemp_".
   iEval (rewrite big_sepL2_sep) in "Hown_pod_frags".
   iDestruct "Hown_pod_frags" as
     "[Hown_pod_meta_frags Hown_pod_spec_frags]".
-  wp_apply (wp_State__ByIndex_podController_combined_with_spec
+  wp_apply_keep (wp_State__ByIndex_podController_combined_with_spec
     _ _ _ _ pod_dqs _ _ _ children_dq
     with "[$Hown_pod_meta_frags $Hown_pod_spec_frags
       $Hown_children_frag $Hown_terminating_children_frag]").
@@ -411,7 +414,7 @@ Proof.
     with "[H]" as "Hdeepown_meta".
   { iNamed "H". iFrame. done. }
   iIntros (sl interfaces pods' dq') "H".
-  iNamedPrefix "H" "Hindex_". wp_auto.
+  iNamedPrefix "H" "Hindex_". wp_auto_keep.
   iDestruct (own_slice_len with "Hindex_Hsl") as
     %(Hsl_len1 & Hsl_len2).
   iDestruct (own_slice_wf with "Hindex_Hsl") as %Hsl_cap.
@@ -444,7 +447,7 @@ Proof.
       + iExactEq "Hindex_Hpods". reflexivity.
       + iPureIntro. word.
   }
-  wp_for "Hloop_inv". wp_if_destruct.
+  wp_for_keep "Hloop_inv". wp_if_destruct_keep.
   - assert (∃ this_interface,
       interfaces !! sint.nat i = Some this_interface) as
       [this_interface Hthis_interface_lookup].
@@ -453,9 +456,9 @@ Proof.
       rewrite Hsl_len1. word. }
     destruct (decide (0 ≤ sint.Z i < sint.Z (slice.len sl)))
       as [_|Hbounds]; last word.
-    wp_apply (wp_load_slice_index with "[$Hindex_Hsl]"); [word| |].
+    wp_apply_keep (wp_load_slice_index with "[$Hindex_Hsl]"); [word| |].
     { iPureIntro. rewrite list_lookup_fmap Hthis_interface_lookup. done. }
-    iIntros "Hindex_Hsl". wp_auto.
+    iIntros "Hindex_Hsl". wp_auto_keep.
     assert (∃ this_pod, pods' !! sint.nat i = Some this_pod) as
       [this_pod Hthis_pod_lookup].
     { apply lookup_lt_is_Some_2.
@@ -471,17 +474,17 @@ Proof.
     rewrite decide_True;
       [change (go.PointerType common.core_v1.Pod)
         with (go.PointerType v1.Pod); reflexivity|].
-    wp_auto.
+    wp_auto_keep.
     rewrite bool_decide_true;
       [change (go.PointerType common.core_v1.Pod)
         with (go.PointerType v1.Pod); reflexivity|].
-    wp_auto.
-    wp_apply wp_slice_literal. iSplitR; first done.
-    iIntros (sl0) "[Hsl0 _]". wp_auto.
-    wp_apply (wp_slice_append with
+    wp_auto_keep.
+    wp_apply_keep wp_slice_literal. iSplitR; first done.
+    iIntros (sl0) "[Hsl0 _]". wp_auto_keep.
+    wp_apply_keep (wp_slice_append with
       "[$Hresult $Hown_result_cap $Hsl0]").
     iIntros (result') "(Hresult & Hown_result_cap & Hsl0)".
-    wp_auto. iApply wp_for_post_do. wp_auto.
+    wp_auto_keep. iApply wp_for_post_do. wp_auto_keep.
     iAssert (I) with
       "[Hi_ptr Hresult Hresult_ptr Hobj Hown_result_cap
         Hother_i_pod Hdeepown_l Hdeepown_l_pods]" as "Hloop_inv".
@@ -516,7 +519,7 @@ Proof.
 Qed.
 
 Lemma wp_FilterPodsByOwner_uniform_with_spec γ l owner owner_kind meta dq1
-    living_pods pod_dq children_dq children_keys has_terminating_children :
+    living_pods pod_dq children_dq children_keys terminating_bound :
   {{{ is_pkg_init code.controllers.common.pkg_id.common ∗
       "#Hisk" ∷ is_kubernetes γ l ∗
       "#Hglobal_l" ∷ (global_addr apimodel.ModelState) ↦□ l ∗
@@ -533,7 +536,7 @@ Lemma wp_FilterPodsByOwner_uniform_with_spec γ l owner owner_kind meta dq1
           meta.(ObjectMetaV.UID') children_dq children_keys ∗
       "Hown_terminating_children_frag" ∷
         own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-          meta.(ObjectMetaV.UID') has_terminating_children ∗
+          meta.(ObjectMetaV.UID') terminating_bound ∗
       "%Hnodup" ∷ ⌜ NoDup (PodV.key <$> living_pods) ⌝ ∗
       "%Hdom_eq" ∷ ⌜ list_to_set (PodV.key <$> living_pods) =
         filter (λ key, key.(KKey.Kind') = "Pod"%go) children_keys ⌝ ∗
@@ -549,7 +552,7 @@ Lemma wp_FilterPodsByOwner_uniform_with_spec γ l owner owner_kind meta dq1
         PodV.deepown_l ptr pod dq') ∗
       ⌜ pod_storage_view <$> filter is_pod_alive pods' ≡ₚ
         pod_storage_view <$> living_pods ⌝ ∗
-      ⌜ has_terminating_children = terminating_children.No →
+      ⌜ terminating_bound = 0%nat →
         pod_storage_view <$> pods' ≡ₚ pod_storage_view <$> living_pods ⌝ ∗
       ⌜ Forall PodV.valid pods' ⌝ ∗
       ⌜ Forall (λ pod,
@@ -570,7 +573,7 @@ Lemma wp_FilterPodsByOwner_uniform_with_spec γ l owner owner_kind meta dq1
       own_children_frag γ (owner_ref_key owner_kind meta)
         meta.(ObjectMetaV.UID') children_dq children_keys ∗
       own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-        meta.(ObjectMetaV.UID') has_terminating_children
+        meta.(ObjectMetaV.UID') terminating_bound
   }}}.
 Proof.
   iIntros (Φ) "H HΦ".
@@ -591,7 +594,7 @@ Proof.
   { subst pod_dqs. rewrite big_sepL2_replicate_r; [done|].
     iExact "Hown_pod_frags". }
   iApply (wp_FilterPodsByOwner_with_spec γ l owner owner_kind meta dq1
-    living_pods pod_dqs children_dq children_keys has_terminating_children with "[-HΦ]").
+    living_pods pod_dqs children_dq children_keys terminating_bound with "[-HΦ]").
   { iFrame "#". iFrame "%". iFrame. }
   iNext. iIntros (sl ptrs pods' dq') "H".
   iDestruct "H" as
@@ -642,7 +645,7 @@ Lemma wp_FilterPodsByOwner_uniform γ l owner owner_kind meta dq1 dq2
           meta.(ObjectMetaV.UID') dq2 children_keys ∗
       "Hown_terminating_children_frag" ∷
         own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-          meta.(ObjectMetaV.UID') terminating_children.No ∗
+          meta.(ObjectMetaV.UID') 0%nat ∗
       "%Hnodup" ∷ ⌜ NoDup (PodV.key <$> pods) ⌝ ∗
       "%Hdom_eq" ∷
         ⌜ list_to_set (PodV.key <$> pods) =
@@ -672,7 +675,7 @@ Lemma wp_FilterPodsByOwner_uniform γ l owner owner_kind meta dq1 dq2
       own_children_frag γ (owner_ref_key owner_kind meta)
         meta.(ObjectMetaV.UID') dq2 children_keys ∗
       own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-        meta.(ObjectMetaV.UID') terminating_children.No
+        meta.(ObjectMetaV.UID') 0%nat
   }}}.
 Proof.
   iIntros (Φ) "H HΦ".
@@ -691,13 +694,13 @@ Proof.
     rewrite big_sepL2_replicate_r; [done|].
     iExact "Hown_pod_meta_frags". }
   iApply (wp_FilterPodsByOwner γ l owner owner_kind meta dq1
-    pods pod_dqs dq2 children_keys terminating_children.No
+    pods pod_dqs dq2 children_keys 0%nat
     with "[-HΦ]").
   { iFrame "#". iFrame "%". iFrame. }
   iNext.
   iIntros (sl ptrs pods' dq') "H".
   iDestruct "H" as
-    "(Hsl & Hpods & %Hliving_meta_perm & %Hmeta_perm & %Hpods_valid & %Hpods_nodup &
+    "(Hsl & Hpods & %Hliving_meta_perm & %Hmeta_perm & %Hpods_valid & %Hpods_nodup & %Hpods_len &
       Hdeepown_l_meta & #Hown_deletion_observed_frags & Hown_pod_meta_frags & Hown_children_frag &
       Hown_terminating_children_frag)".
   specialize (Hmeta_perm eq_refl).
@@ -716,8 +719,111 @@ Proof.
   iApply "HΦ". iFrame. iFrame "%".
 Qed.
 
+(* [wp_FilterPodsByOwner_uniform] that also returns that every listed pod is
+   alive: with no terminating children, the listing is its own living part. *)
+Lemma wp_FilterPodsByOwner_uniform_alive γ l owner owner_kind meta dq1 dq2
+    pods children_keys :
+  {{{ is_pkg_init code.controllers.common.pkg_id.common ∗
+      "#Hisk" ∷ is_kubernetes γ l ∗
+      "#Hglobal_l" ∷ (global_addr apimodel.ModelState) ↦□ l ∗
+      "Hdeepown_l_meta" ∷ ObjectMetaV.deepown_l owner meta dq1 ∗
+      "Hown_pod_meta_frags" ∷ ([∗ list] pod ∈ pods,
+        own_meta_frag γ (PodV.key pod)
+          pod.(PodV.ObjectMeta').(ObjectMetaV.UID') dq2
+          pod.(PodV.ObjectMeta')) ∗
+      "Hown_children_frag" ∷
+        own_children_frag γ (owner_ref_key owner_kind meta)
+          meta.(ObjectMetaV.UID') dq2 children_keys ∗
+      "Hown_terminating_children_frag" ∷
+        own_terminating_children_frag γ (owner_ref_key owner_kind meta)
+          meta.(ObjectMetaV.UID') 0%nat ∗
+      "%Hnodup" ∷ ⌜ NoDup (PodV.key <$> pods) ⌝ ∗
+      "%Hdom_eq" ∷
+        ⌜ list_to_set (PodV.key <$> pods) =
+          filter (λ key, key.(KKey.Kind') = "Pod"%go) children_keys ⌝ ∗
+      "%Hslash_free" ∷
+        ⌜ slash_free owner_kind ∧
+          slash_free meta.(ObjectMetaV.Namespace') ∧
+          slash_free meta.(ObjectMetaV.Name') ∧
+          slash_free meta.(ObjectMetaV.UID') ⌝
+  }}}
+    @! common.FilterPodsByOwner #owner #owner_kind
+  {{{ sl ptrs pods' dq', RET (#sl, #interface.nil);
+      sl ↦* ptrs ∗
+      ([∗ list] ptr;pod ∈ ptrs;pods',
+        PodV.deepown_l ptr pod dq') ∗
+      ⌜ ObjectMetaV.without_resource_version <$>
+          (PodV.ObjectMeta' <$> pods') ≡ₚ
+        ObjectMetaV.without_resource_version <$>
+          (PodV.ObjectMeta' <$> pods) ⌝ ∗
+      ⌜ ∀ pod, pod ∈ pods' → is_pod_alive pod ⌝ ∗
+      ⌜ Forall PodV.valid pods' ⌝ ∗
+      ⌜ NoDup (PodV.key <$> pods') ⌝ ∗
+      ObjectMetaV.deepown_l owner meta dq1 ∗
+      ([∗ list] pod ∈ pods',
+        own_meta_frag γ (PodV.key pod)
+          pod.(PodV.ObjectMeta').(ObjectMetaV.UID') dq2
+          pod.(PodV.ObjectMeta')) ∗
+      own_children_frag γ (owner_ref_key owner_kind meta)
+        meta.(ObjectMetaV.UID') dq2 children_keys ∗
+      own_terminating_children_frag γ (owner_ref_key owner_kind meta)
+        meta.(ObjectMetaV.UID') 0%nat
+  }}}.
+Proof.
+  iIntros (Φ) "H HΦ".
+  iDestruct "H" as
+    "(#Hinit & #Hisk & #Hglobal_l & Hdeepown_l_meta &
+      Hown_pod_meta_frags & Hown_children_frag &
+      Hown_terminating_children_frag &
+      %Hnodup & %Hdom_eq & %Hslash_free)".
+  set pod_dqs := replicate (length pods) dq2.
+  iAssert (([∗ list] pod;pod_dq ∈ pods;pod_dqs,
+    own_meta_frag γ (PodV.key pod)
+      pod.(PodV.ObjectMeta').(ObjectMetaV.UID')
+      pod_dq pod.(PodV.ObjectMeta')))%I
+    with "[Hown_pod_meta_frags]" as "Hown_pod_meta_frags_mixed".
+  { subst pod_dqs.
+    rewrite big_sepL2_replicate_r; [done|].
+    iExact "Hown_pod_meta_frags". }
+  iApply (wp_FilterPodsByOwner γ l owner owner_kind meta dq1
+    pods pod_dqs dq2 children_keys 0%nat
+    with "[-HΦ]").
+  { iFrame "#". iFrame "%". iFrame. }
+  iNext.
+  iIntros (sl ptrs pods' dq') "H".
+  iDestruct "H" as
+    "(Hsl & Hpods & %Hliving_meta_perm & %Hmeta_perm & %Hpods_valid & %Hpods_nodup & %Hpods_len &
+      Hdeepown_l_meta & #Hown_deletion_observed_frags & Hown_pod_meta_frags & Hown_children_frag &
+      Hown_terminating_children_frag)".
+  specialize (Hmeta_perm eq_refl).
+  (* The listing and its living part both match [pods], so they have the same
+     length, and a pod that is not alive would make the living part shorter. *)
+  assert (∀ pod, pod ∈ pods' → is_pod_alive pod) as Hpods_alive.
+  { intros pod Hpod.
+    destruct (decide (is_pod_alive pod)) as [Halive|Hdead]; first exact Halive.
+    exfalso.
+    pose proof (Permutation_length Hliving_meta_perm) as Hliving_len.
+    pose proof (Permutation_length Hmeta_perm) as Hall_len.
+    rewrite !length_fmap in Hliving_len Hall_len.
+    pose proof (length_filter_lt is_pod_alive pods' pod Hpod Hdead).
+    lia. }
+  subst pod_dqs.
+  iEval (rewrite big_sepL2_replicate_r; [done|])
+    in "Hown_pod_meta_frags".
+  iEval (rewrite own_meta_frag_list_as_erased_metas)
+    in "Hown_pod_meta_frags".
+  iAssert (([∗ list] pod ∈ pods',
+    own_meta_frag γ (PodV.key pod)
+      pod.(PodV.ObjectMeta').(ObjectMetaV.UID') dq2
+      pod.(PodV.ObjectMeta')))%I
+    with "[Hown_pod_meta_frags]" as "Hown_pod_meta_frags".
+  { rewrite own_meta_frag_list_as_erased_metas Hmeta_perm.
+    iExact "Hown_pod_meta_frags". }
+  iApply "HΦ". iFrame. iFrame "%".
+Qed.
+
 Lemma wp_FilterPodsByOwner_uniform_combined γ l owner owner_kind meta dq1 dq2
-    living_pods children_keys has_terminating_children :
+    living_pods children_keys terminating_bound :
   {{{ is_pkg_init code.controllers.common.pkg_id.common ∗
       "#Hisk" ∷ is_kubernetes γ l ∗
       "#Hglobal_l" ∷ (global_addr apimodel.ModelState) ↦□ l ∗
@@ -729,7 +835,7 @@ Lemma wp_FilterPodsByOwner_uniform_combined γ l owner owner_kind meta dq1 dq2
         meta.(ObjectMetaV.UID') dq2 children_keys ∗
       "Hown_terminating_children_frag" ∷
         own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-          meta.(ObjectMetaV.UID') has_terminating_children ∗
+          meta.(ObjectMetaV.UID') terminating_bound ∗
       "%Hnodup" ∷ ⌜ NoDup (PodV.key <$> living_pods) ⌝ ∗
       "%Hdom_eq" ∷ ⌜ list_to_set (PodV.key <$> living_pods) =
         filter (λ key, key.(KKey.Kind') = "Pod"%go) children_keys ⌝ ∗
@@ -746,6 +852,7 @@ Lemma wp_FilterPodsByOwner_uniform_combined γ l owner owner_kind meta dq1 dq2
         ObjectMetaV.without_resource_version <$> (PodV.ObjectMeta' <$> living_pods) ⌝ ∗
       ⌜ Forall PodV.valid all_pods ⌝ ∗
       ⌜ NoDup (PodV.key <$> all_pods) ⌝ ∗
+      ⌜ (length all_pods ≤ length living_pods + terminating_bound)%nat ⌝ ∗
       ObjectMetaV.deepown_l owner meta dq1 ∗
       ([∗ list] pod ∈ terminating_pods all_pods,
         own_deletion_observed_frag γ (PodV.key pod) pod.(PodV.ObjectMeta').(ObjectMetaV.UID')) ∗
@@ -755,7 +862,7 @@ Lemma wp_FilterPodsByOwner_uniform_combined γ l owner owner_kind meta dq1 dq2
       own_children_frag γ (owner_ref_key owner_kind meta)
         meta.(ObjectMetaV.UID') dq2 children_keys ∗
       own_terminating_children_frag γ (owner_ref_key owner_kind meta)
-        meta.(ObjectMetaV.UID') has_terminating_children
+        meta.(ObjectMetaV.UID') terminating_bound
   }}}.
 Proof.
   iIntros (Φ) "H HΦ".
@@ -771,13 +878,13 @@ Proof.
   { subst pod_dqs. rewrite big_sepL2_replicate_r; [done|].
     iExact "Hown_pod_meta_frags". }
   iApply (wp_FilterPodsByOwner γ l owner owner_kind meta dq1
-    living_pods pod_dqs dq2 children_keys has_terminating_children with "[-HΦ]").
+    living_pods pod_dqs dq2 children_keys terminating_bound with "[-HΦ]").
   { iFrame "#". iFrame "%". iFrame. }
   iNext.
   iIntros (sl ptrs all_pods dq') "H".
   iDestruct "H" as
     "(Hsl & Hpods & %Hliving_meta_perm & %Hquiescent_meta_perm &
-      %Hpods_valid & %Hpods_nodup & Hdeepown_l_meta & #Hown_deletion_observed_frags &
+      %Hpods_valid & %Hpods_nodup & %Hpods_len & Hdeepown_l_meta & #Hown_deletion_observed_frags &
       Hown_pod_meta_frags & Hown_children_frag & Hown_terminating_children_frag)".
   subst pod_dqs.
   iEval (rewrite big_sepL2_replicate_r; [done|]) in "Hown_pod_meta_frags".

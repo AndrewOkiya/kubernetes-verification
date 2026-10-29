@@ -1,3 +1,7 @@
+From New.proof.encoding Require Export json_init.
+From New.proof.net Require Export http_init.
+From New.proof.gopkg_in.evanphx Require Export json_patch_v4_init.
+From New.proof.k8s_io.apimachinery.pkg.util Require Export mergepatch_init strategicpatch_init.
 From New.proof Require Export prelude.
 From New.proof Require Export sync fmt time context.
 From New.proof.k8s_io.api.apps Require Export v1_init.
@@ -27,7 +31,8 @@ From New.proof.k8s_io.kubernetes.pkg.apis.apps Require Export v1_init.
 From New.proof.k8s_io.kubernetes.pkg.apis.core Require Export v1_init.
 From New.proof.k8s_io.kubernetes.pkg.apis.rbac Require Export install_init.
 From New.proof.k8s_io.kubernetes.pkg Require Export controller_init.
-From New.proof.k8s_io.kubernetes.pkg.registry.apps Require Export deployment_init.
+From New.proof.k8s_io.kubernetes.pkg.registry.apps Require Export deployment_init controllerrevision_init.
+From New.proof.k8s_io.apiserver.pkg.storage Require Export names_init.
 From New.proof.k8s_io.kubernetes.pkg.registry.apps Require Export replicaset_init.
 From New.proof.k8s_io.kubernetes.pkg.registry.apps Require Export statefulset_init.
 From New.proof.k8s_io.kubernetes.pkg.registry.core Require Export pod_init.

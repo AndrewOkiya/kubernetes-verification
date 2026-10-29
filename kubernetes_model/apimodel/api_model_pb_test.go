@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -38,7 +39,9 @@ func setupTestServer(t *testing.T) *testserver.TestServer {
 
 // teardownServer stops the test server
 func teardownServer(t *testing.T, server *testserver.TestServer) {
-	server.Stop()
+	if err := server.Stop(); err != nil {
+		t.Errorf("Failed to stop test server: %v", err)
+	}
 }
 
 type opStats struct {
@@ -51,11 +54,13 @@ type pbtStats struct {
 	create       opStats
 	update       opStats
 	updateStatus opStats
+	patch        opStats
 	delete       opStats
 }
 
 type createMode int
 type updateMode int
+type patchMode int
 type deleteMode int
 
 const (
@@ -66,6 +71,11 @@ const (
 const (
 	updateModeValid updateMode = iota
 	updateModeInvalid
+)
+
+const (
+	patchModeValid patchMode = iota
+	patchModeInvalid
 )
 
 const (
@@ -100,6 +110,15 @@ func (s *pbtStats) recordUpdateStatus(err error) {
 	}
 }
 
+func (s *pbtStats) recordPatch(err error) {
+	s.patch.attempts++
+	if err == nil {
+		s.patch.successes++
+	} else {
+		s.patch.rejections++
+	}
+}
+
 func (s *pbtStats) recordDelete(err error) {
 	s.delete.attempts++
 	if err == nil {
@@ -109,7 +128,7 @@ func (s *pbtStats) recordDelete(err error) {
 	}
 }
 
-// TestPBT tests whether the model's Create, Update, and Delete operations conform
+// TestPBT tests whether the model's Create, Update, Patch, and Delete operations conform
 // to real Kubernetes API behavior.
 //
 // Run with:
@@ -119,16 +138,18 @@ func (s *pbtStats) recordDelete(err error) {
 func TestPBT(t *testing.T) {
 	stats := &pbtStats{}
 	t.Cleanup(func() {
-		t.Logf("PBT stats: create attempts=%d successes=%d rejections=%d | update attempts=%d successes=%d rejections=%d | updateStatus attempts=%d successes=%d rejections=%d | delete attempts=%d successes=%d rejections=%d",
+		t.Logf("PBT stats: create attempts=%d successes=%d rejections=%d | update attempts=%d successes=%d rejections=%d | updateStatus attempts=%d successes=%d rejections=%d | patch attempts=%d successes=%d rejections=%d | delete attempts=%d successes=%d rejections=%d",
 			stats.create.attempts, stats.create.successes, stats.create.rejections,
 			stats.update.attempts, stats.update.successes, stats.update.rejections,
 			stats.updateStatus.attempts, stats.updateStatus.successes, stats.updateStatus.rejections,
+			stats.patch.attempts, stats.patch.successes, stats.patch.rejections,
 			stats.delete.attempts, stats.delete.successes, stats.delete.rejections,
 		)
 	})
 
 	rapid.Check(t, func(rt *rapid.T) {
 		server := setupTestServer(t)
+		defer teardownServer(t, server)
 		ctx := context.Background()
 
 		// Clean up before test to start with empty state
@@ -141,17 +162,19 @@ func TestPBT(t *testing.T) {
 
 		// Track existing objects (should match between model and real API)
 		existingObjects := make(map[KKey]bool)
-		kinds := []string{"Pod", "PersistentVolumeClaim", "ReplicaSet", "StatefulSet", "Deployment"}
+		kinds := []string{"Pod", "PersistentVolumeClaim", "ReplicaSet", "StatefulSet", "Deployment", "ControllerRevision"}
 
 		for range 10000 {
 			// Weighted operation selection: favor Create early to build up state.
 			createWeight := 0.4
-			updateWeight := 0.25
-			updateStatusWeight := 0.2
+			updateWeight := 0.2
+			updateStatusWeight := 0.15
+			patchWeight := 0.15
 			if len(existingObjects) < 5 {
 				createWeight = 0.7
 				updateWeight = 0.1
 				updateStatusWeight = 0.1
+				patchWeight = 0.05
 			}
 			opRoll := rapid.Float64Range(0, 1).Draw(rt, "operationRoll")
 
@@ -293,6 +316,34 @@ func TestPBT(t *testing.T) {
 							return server.GetDeployment(ctx, name)
 						},
 					)
+
+				case "ControllerRevision":
+					testCreate(rt, ctx, state, server, namespace, existingObjects,
+						stats,
+						"ControllerRevision",
+						func(rt *rapid.T) *appsv1.ControllerRevision {
+							switch rapid.IntRange(0, 1).Draw(rt, "validControllerRevisionGenType") {
+							case 0:
+								return generators.MinimalControllerRevisionGen().Draw(rt, "validControllerRevision")
+							default:
+								return generators.ComprehensiveControllerRevisionGen().Draw(rt, "validControllerRevision")
+							}
+						},
+						func(rt *rapid.T) *appsv1.ControllerRevision {
+							return generators.InvalidControllerRevisionGen().Draw(rt, "invalidControllerRevision")
+						},
+						func(d *appsv1.ControllerRevision) *appsv1.ControllerRevision { return d.DeepCopy() },
+						func(ns string, obj *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+							return state.ControllerRevisionCreate(ns, obj)
+						},
+						func(ctx context.Context, obj *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+							return server.CreateControllerRevision(ctx, obj)
+						},
+						func(ns, name string) (interface{}, error) { return state.ControllerRevisionGet(ns, name) },
+						func(ctx context.Context, name string) (*appsv1.ControllerRevision, error) {
+							return server.GetControllerRevision(ctx, name)
+						},
+					)
 				}
 			case opRoll < createWeight+updateWeight:
 				kind := rapid.SampledFrom(kinds).Draw(rt, "kind")
@@ -413,9 +464,37 @@ func TestPBT(t *testing.T) {
 						},
 						generators.ComprehensiveDeploymentMut,
 					)
+
+				case "ControllerRevision":
+					testUpdate(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"Update", stats.recordUpdate, "ControllerRevision",
+						func(ns, name string) (*appsv1.ControllerRevision, error) {
+							return state.ControllerRevisionGet(ns, name)
+						},
+						func(ctx context.Context, name string) (*appsv1.ControllerRevision, error) {
+							return server.GetControllerRevision(ctx, name)
+						},
+						func(ns string, obj *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+							return state.ControllerRevisionUpdate(ns, obj)
+						},
+						func(ctx context.Context, obj *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+							return server.UpdateControllerRevision(ctx, obj)
+						},
+						func(d *appsv1.ControllerRevision) *appsv1.ControllerRevision { return d.DeepCopy() },
+						func(name, namespace string) *appsv1.ControllerRevision {
+							d := generators.MinimalControllerRevisionGen().Example()
+							d.Name = name
+							d.Namespace = namespace
+							return d
+						},
+						generators.ComprehensiveControllerRevisionMut,
+					)
 				}
 			case opRoll < createWeight+updateWeight+updateStatusWeight:
-				kind := rapid.SampledFrom(kinds).Draw(rt, "kind")
+				// ControllerRevision has no status subresource.
+				statusKinds := []string{"Pod", "PersistentVolumeClaim", "ReplicaSet", "StatefulSet", "Deployment"}
+				kind := rapid.SampledFrom(statusKinds).Draw(rt, "kind")
 
 				switch kind {
 				case "Pod":
@@ -536,6 +615,102 @@ func TestPBT(t *testing.T) {
 						generators.ComprehensiveDeploymentStatusMut,
 					)
 				}
+			case opRoll < createWeight+updateWeight+updateStatusWeight+patchWeight:
+				kind := rapid.SampledFrom(kinds).Draw(rt, "kind")
+				switch kind {
+				case "Pod":
+					testPatch(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"Pod",
+						state.PodGet,
+						server.GetPod,
+						state.PodPatch,
+						server.PatchPod,
+						func(rt *rapid.T) generators.Patch { return generators.PatchGen("Pod", true).Draw(rt, "validPatch") },
+						func(rt *rapid.T) generators.Patch { return generators.PatchGen("Pod", false).Draw(rt, "invalidPatch") },
+					)
+
+				case "PersistentVolumeClaim":
+					testPatch(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"PersistentVolumeClaim",
+						state.PersistentVolumeClaimGet,
+						server.GetPersistentVolumeClaim,
+						state.PersistentVolumeClaimPatch,
+						server.PatchPersistentVolumeClaim,
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("PersistentVolumeClaim", true).Draw(rt, "validPatch")
+						},
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("PersistentVolumeClaim", false).Draw(rt, "invalidPatch")
+						},
+					)
+
+				case "ReplicaSet":
+					testPatch(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"ReplicaSet",
+						state.ReplicaSetGet,
+						server.GetReplicaSet,
+						state.ReplicaSetPatch,
+						server.PatchReplicaSet,
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("ReplicaSet", true).Draw(rt, "validPatch")
+						},
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("ReplicaSet", false).Draw(rt, "invalidPatch")
+						},
+					)
+
+				case "StatefulSet":
+					testPatch(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"StatefulSet",
+						state.StatefulSetGet,
+						server.GetStatefulSet,
+						state.StatefulSetPatch,
+						server.PatchStatefulSet,
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("StatefulSet", true).Draw(rt, "validPatch")
+						},
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("StatefulSet", false).Draw(rt, "invalidPatch")
+						},
+					)
+
+				case "Deployment":
+					testPatch(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"Deployment",
+						state.DeploymentGet,
+						server.GetDeployment,
+						state.DeploymentPatch,
+						server.PatchDeployment,
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("Deployment", true).Draw(rt, "validPatch")
+						},
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("Deployment", false).Draw(rt, "invalidPatch")
+						},
+					)
+
+				case "ControllerRevision":
+					testPatch(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"ControllerRevision",
+						state.ControllerRevisionGet,
+						server.GetControllerRevision,
+						state.ControllerRevisionPatch,
+						server.PatchControllerRevision,
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("ControllerRevision", true).Draw(rt, "validPatch")
+						},
+						func(rt *rapid.T) generators.Patch {
+							return generators.PatchGen("ControllerRevision", false).Draw(rt, "invalidPatch")
+						},
+					)
+				}
+
 			default:
 				kind := rapid.SampledFrom(kinds).Draw(rt, "kind")
 
@@ -589,6 +764,16 @@ func TestPBT(t *testing.T) {
 						state.DeploymentDelete,
 						server.DeleteDeployment,
 					)
+
+				case "ControllerRevision":
+					testDelete(
+						rt, ctx, state, server, namespace, existingObjects, stats,
+						"ControllerRevision",
+						state.ControllerRevisionGet,
+						server.GetControllerRevision,
+						state.ControllerRevisionDelete,
+						server.DeleteControllerRevision,
+					)
 				}
 			}
 		}
@@ -597,7 +782,6 @@ func TestPBT(t *testing.T) {
 			t.Logf("Warning: final cleanup failed: %v", err)
 		}
 
-		teardownServer(t, server)
 	})
 
 }
@@ -868,6 +1052,121 @@ func testUpdate[T metav1.Object](
 	}
 
 	recordResult(modelErr)
+}
+
+func testPatch[T metav1.Object](
+	rt *rapid.T,
+	ctx context.Context,
+	state *State,
+	server *testserver.TestServer,
+	namespace string,
+	existingObjects map[KKey]bool,
+	stats *pbtStats,
+	kind string,
+	modelGet func(namespace, name string) (T, error),
+	realGet func(ctx context.Context, name string) (T, error),
+	modelPatch func(namespace, name string, patchType types.PatchType, data []byte, subresources ...string) (T, error),
+	realPatch func(ctx context.Context, name string, patchType types.PatchType, data []byte, subresources ...string) (T, error),
+	drawValid func(*rapid.T) generators.Patch,
+	drawInvalid func(*rapid.T) generators.Patch,
+) {
+	var targetKey KKey
+	keys := make([]KKey, 0)
+	for k := range existingObjects {
+		if k.Kind == kind {
+			keys = append(keys, k)
+		}
+	}
+	// Keep patch target selection stable when rapid replays a generated request.
+	sort.Slice(keys, func(i, j int) bool { return keys[i].Name < keys[j].Name })
+
+	// First choose between:
+	// - a valid patch we expect to succeed
+	// - an invalid patch that should be rejected or not found
+	mode := patchModeInvalid
+	if rapid.IntRange(0, 9).Draw(rt, "patchModeRoll") < 7 {
+		mode = patchModeValid
+	}
+	switch mode {
+	case patchModeValid:
+		if len(keys) == 0 {
+			// A valid patch needs a stored object. Fall back to the invalid
+			// missing-object path if none of this kind are tracked.
+			mode = patchModeInvalid
+		} else {
+			idx := rapid.IntRange(0, len(keys)-1).Draw(rt, "patchTargetIdx")
+			targetKey = keys[idx]
+			rt.Logf("Patching existing %s in valid mode: %s (from %d candidates)", kind, targetKey.Name, len(keys))
+		}
+	}
+	if mode == patchModeInvalid {
+		// Invalid mode covers bad patches to existing objects and missing objects.
+		if len(keys) > 0 && rapid.Bool().Draw(rt, "invalidPatchTargetsExisting") {
+			idx := rapid.IntRange(0, len(keys)-1).Draw(rt, "patchTargetIdx")
+			targetKey = keys[idx]
+			rt.Logf("Patching existing %s in invalid mode: %s (from %d candidates)", kind, targetKey.Name, len(keys))
+		} else {
+			targetKey = KKey{
+				Kind:      kind,
+				Namespace: namespace,
+				Name:      rapid.StringMatching(`nonexist-[a-z0-9]{5}`).Draw(rt, "patchName"),
+			}
+		}
+	}
+
+	// Compare both systems before applying the patch.
+	prePatchModelGet, prePatchModelGetErr := modelGet(namespace, targetKey.Name)
+	prePatchRealGet, prePatchRealGetErr := realGet(ctx, targetKey.Name)
+	match, diffs := comparators.CompareErrors(prePatchModelGetErr, prePatchRealGetErr, false)
+	if !match {
+		rt.Fatalf("%s Get error before Patch mismatch for %s:\n%v", kind, targetKey.Name, diffs)
+	}
+	if prePatchModelGetErr == nil {
+		match, diffs = comparators.CompareObjects(prePatchModelGet, prePatchRealGet)
+		if !match {
+			rt.Fatalf("%s Get result before Patch mismatch for %s:\n%v", kind, targetKey.Name, diffs)
+		}
+	}
+
+	var patch generators.Patch
+	switch mode {
+	case patchModeValid:
+		patch = drawValid(rt)
+	case patchModeInvalid:
+		patch = drawInvalid(rt)
+	}
+	rt.Logf("Patching %s %s (%s, subresources=%v): %s", kind, targetKey.Name, patch.Type, patch.Subresources, patch.Data)
+	modelPatched, modelErr := modelPatch(namespace, targetKey.Name, patch.Type, patch.Data, patch.Subresources...)
+	realPatched, realErr := realPatch(ctx, targetKey.Name, patch.Type, patch.Data, patch.Subresources...)
+	match, diffs = comparators.CompareErrors(modelErr, realErr, false)
+	if !match {
+		rt.Fatalf("%s Patch error mismatch for %s:\n%v\nPatch (%s, subresources=%v): %s\nModel error: %v\nReal error: %v",
+			kind, targetKey.Name, diffs, patch.Type, patch.Subresources, patch.Data, modelErr, realErr)
+	}
+	if modelErr == nil {
+		match, diffs = comparators.CompareObjects(modelPatched, realPatched)
+		if !match {
+			rt.Fatalf("%s Patch result mismatch for %s:\n%v", kind, targetKey.Name, diffs)
+		}
+	}
+
+	// Re-read because a patch may persist, be rejected, or delete a finalizing object.
+	modelGet2, modelGetErr := modelGet(namespace, targetKey.Name)
+	realGet2, realGetErr := realGet(ctx, targetKey.Name)
+	match, diffs = comparators.CompareErrors(modelGetErr, realGetErr, false)
+	if !match {
+		rt.Fatalf("%s Get error after Patch mismatch for %s:\n%v", kind, targetKey.Name, diffs)
+	}
+	if modelGetErr == nil {
+		match, diffs = comparators.CompareObjects(modelGet2, realGet2)
+		if !match {
+			rt.Fatalf("%s Get result after Patch mismatch for %s:\n%v", kind, targetKey.Name, diffs)
+		}
+		existingObjects[targetKey] = true
+	} else if apierrors.IsNotFound(modelGetErr) {
+		delete(existingObjects, targetKey)
+	}
+	stats.recordPatch(modelErr)
 }
 
 func testDelete[T metav1.Object](

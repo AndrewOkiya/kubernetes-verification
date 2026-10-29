@@ -3,10 +3,12 @@ package apimodel
 import (
 	"fmt"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -37,11 +39,11 @@ func (s *State) deleteTx(key KKey, options metav1.DeleteOptions) error {
 		}
 
 		if preconditionUIDMismatch(optionsCopy, metadata) {
-			return newPreconditionUIDConflictError(
-				key.Kind,
+			return apierrors.NewConflict(
+				schema.GroupResource{Resource: key.Kind},
 				metadata.GetName(),
-				string(*optionsCopy.Preconditions.UID),
-				string(metadata.GetUID()),
+				fmt.Errorf("the UID in the precondition (%s) does not match the UID in record (%s). The object might have been deleted and then recreated",
+					string(*optionsCopy.Preconditions.UID), string(metadata.GetUID())),
 			)
 		}
 
@@ -112,6 +114,20 @@ func (s *State) PodUpdateTx(namespace string, pod *corev1.Pod) (*corev1.Pod, err
 	return updatedPod, nil
 }
 
+func (s *State) ReplicaSetUpdateTx(namespace string, rs *appsv1.ReplicaSet) (*appsv1.ReplicaSet, error) {
+	obj, err := s.updateTx("ReplicaSet", namespace, rs)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRS, ok := obj.(*appsv1.ReplicaSet)
+	if !ok {
+		return nil, fmt.Errorf("transactional update returned unexpected type %T", obj)
+	}
+
+	return updatedRS, nil
+}
+
 func (s *State) updateStatusTx(kind, namespace string, obj interface{}) (interface{}, error) {
 	for {
 		objCopy := deepCopy(obj)
@@ -153,4 +169,46 @@ func (s *State) updateStatusTx(kind, namespace string, obj interface{}) (interfa
 		}
 		return updatedObj, err
 	}
+}
+
+func (s *State) ReplicaSetUpdateStatusTx(namespace string, rs *appsv1.ReplicaSet) (*appsv1.ReplicaSet, error) {
+	obj, err := s.updateStatusTx("ReplicaSet", namespace, rs)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRS, ok := obj.(*appsv1.ReplicaSet)
+	if !ok {
+		return nil, fmt.Errorf("transactional status update returned unexpected type %T", obj)
+	}
+
+	return updatedRS, nil
+}
+
+func (s *State) ControllerRevisionUpdateTx(namespace string, rs *appsv1.ControllerRevision) (*appsv1.ControllerRevision, error) {
+	obj, err := s.updateTx("ControllerRevision", namespace, rs)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRS, ok := obj.(*appsv1.ControllerRevision)
+	if !ok {
+		return nil, fmt.Errorf("transactional update returned unexpected type %T", obj)
+	}
+
+	return updatedRS, nil
+}
+
+func (s *State) StatefulSetUpdateStatusTx(namespace string, rs *appsv1.StatefulSet) (*appsv1.StatefulSet, error) {
+	obj, err := s.updateStatusTx("StatefulSet", namespace, rs)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRS, ok := obj.(*appsv1.StatefulSet)
+	if !ok {
+		return nil, fmt.Errorf("transactional status update returned unexpected type %T", obj)
+	}
+
+	return updatedRS, nil
 }

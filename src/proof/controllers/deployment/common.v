@@ -1,10 +1,12 @@
 From New.proof Require Import prelude empty_ffi.
 From New.proof Require Export util.
 From New.proof Require Export wp_helpers.
-From New.proof.kubernetes_types Require Export prelude.
+From New.object_specs Require Export prelude.
 From New.proof.controllers.deployment Require Export deployment_init.
 From New.proof.k8s_io.api.apps Require Export v1.
 From New.proof.k8s_io.kubernetes.pkg Require Export controller.
+From New.proof.k8s_io.kubernetes.pkg.controller.deployment Require Export util.
+From New.proof.k8s_io.kubernetes.pkg.util Require Export labels.
 From New.proof.k8s_io.apimachinery.pkg.api Require Export errors.
 
 Section proof.
@@ -32,6 +34,7 @@ Proof using package_sem.
   constructor; try exact object_core_v1_sem; try apply _.
 Defined.
 Local Set Default Proof Using "All".
+Context `{!KObjectV.ObjectInterfaceAssumptions}.
 (* ---------------------------------------------------------------- *)
 (* Gallina model of the pure deployment helpers                      *)
 (* ---------------------------------------------------------------- *)
@@ -90,21 +93,6 @@ Definition old_replica_set_pairs (ptrs : list loc) (rss : list ReplicaSetV.t)
     (new_rs_o : option ReplicaSetV.t) : list (loc * ReplicaSetV.t) :=
   filter (λ pr, rs_is_old new_rs_o pr.2) (zip ptrs rss).
 
-(* TODO: un-axiomatize. Once PodTemplateSpecV carries enough structure to state
-   template equality, template_matches should become a Definition (equality of
-   the templates after deleting the pod-template-hash label from each
-   ObjectMeta), the two axioms below should become proved lemmas, and
-   wp_equalIgnoreHash in replica_sets.v should be discharged rather than
-   Admitted.
-
-   equalIgnoreHash compares pod templates ignoring the pod-template-hash label.
-   PodTemplateSpecV is axiomatized, so the comparison relation and the spec
-   below are trusted, mirroring controller.v's pod_from_template. *)
-Parameter template_matches : PodTemplateSpecV.t → PodTemplateSpecV.t → Prop.
-Axiom template_matches_dec : ∀ t1 t2, Decision (template_matches t1 t2).
-#[global] Existing Instance template_matches_dec.
-Axiom template_matches_sym : ∀ t1 t2, template_matches t1 t2 → template_matches t2 t1.
-
 Definition rs_template (rs : ReplicaSetV.t) : PodTemplateSpecV.t :=
   rs.(ReplicaSetV.Spec').(ReplicaSetSpecV.Template').
 
@@ -116,5 +104,57 @@ Definition deployment_template (d : DeploymentV.t) : PodTemplateSpecV.t :=
 Definition find_new_replica_set (d : DeploymentV.t) (rss : list ReplicaSetV.t)
     : option (nat * ReplicaSetV.t) :=
   list_find (λ rs, template_matches (rs_template rs) (deployment_template d)) rss.
+
+(* scaleReplicaSet rewrites only the replica count. *)
+Definition rs_scaled_spec (rs : ReplicaSetV.t) (n : w32) : ReplicaSetSpecV.t :=
+  ReplicaSetSpecV.mk
+    (Some n)
+    rs.(ReplicaSetV.Spec').(ReplicaSetSpecV.MinReadySeconds')
+    rs.(ReplicaSetV.Spec').(ReplicaSetSpecV.Selector')
+    rs.(ReplicaSetV.Spec').(ReplicaSetSpecV.Template').
+
+(* The ReplicaSet [scaleReplicaSet] submits: the deep copy with nothing but the
+   replica count overwritten. *)
+Definition rs_scaled (rs : ReplicaSetV.t) (n : w32) : ReplicaSetV.t :=
+  rs <| ReplicaSetV.Spec' := rs_scaled_spec rs n |>.
+
+(* Rescaling preserves everything admission looks at. The replica count is the
+   only field that changes, and a non-negative count is still admissible. *)
+Lemma rs_scaled_spec_valid_create rs n :
+  ReplicaSetSpecV.valid_create rs.(ReplicaSetV.Spec') →
+  0 ≤ sint.Z n →
+  ReplicaSetSpecV.valid_create (rs_scaled_spec rs n).
+Proof.
+  rewrite /ReplicaSetSpecV.valid_create /rs_scaled_spec /=.
+  intros (_ & Hmin & Hsel & Htmpl) Hn. split_and!; done.
+Qed.
+
+Lemma rs_scaled_valid_create request_kind ns rs n :
+  ReplicaSetV.valid rs →
+  0 ≤ sint.Z n →
+  request_kind = ReplicaSetV.kind →
+  ns = rs.(ReplicaSetV.ObjectMeta').(ObjectMetaV.Namespace') →
+  ReplicaSetV.valid_create request_kind ns (rs_scaled rs n).
+Proof.
+  rewrite /ReplicaSetV.valid /ReplicaSetV.valid_create /rs_scaled /=.
+  intros (Htm & _ & Hmeta & Hspec & _) Hn Hkind Hns.
+  pose proof Hmeta as (_ & _ & _ & Hns_nonempty & Hns_valid & _).
+  split_and!.
+  - exact Hkind.
+  - rewrite Hns. exact Hns_nonempty.
+  - rewrite Hns. exact Hns_valid.
+  - eapply valid_typemeta_valid_create_typemeta. exact Htm.
+  - (* A valid stored ObjectMeta is admissible on create, as for
+       [PodV.valid_create_of_valid]. *)
+    unfold ObjectMetaV.valid in Hmeta. unfold ObjectMetaV.valid_create.
+    destruct Hmeta as (Hgenerate_name & Hname_nonempty & Hname & Hnamespace_nonempty &
+      Hnamespace_valid & Huid & Hlabels & Hannotations & Howner_references & Hfinalizers &
+      Hmanaged_fields & Hself_link).
+    case_decide; first contradiction.
+    split; [split; assumption|].
+    split; [right; split; [assumption|symmetry; exact Hns]|].
+    repeat split; assumption.
+  - apply rs_scaled_spec_valid_create; [exact (proj1 Hspec)|exact Hn].
+Qed.
 
 End proof.

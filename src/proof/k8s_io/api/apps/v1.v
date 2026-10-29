@@ -3,7 +3,7 @@ From New.proof.k8s_io.apimachinery.pkg.runtime Require Export schema.
 From New.proof.k8s_io.apimachinery.pkg.apis.meta Require Export v1.
 
 From New.proof Require Import prelude empty_ffi.
-From New.proof.kubernetes_types Require Import prelude.
+From New.object_specs Require Import prelude.
 
 Section proof.
 Context `{hG: !heapGS Σ} `{!ffi_semantics _ _}.
@@ -44,6 +44,21 @@ Context {meta_v1_sem : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Assumptions}
   {core_v1_sem : code.k8s_io.api.core.v1.v1.Assumptions}
   {apps_v1_sem : code.k8s_io.api.apps.v1.v1.Assumptions}.
 Local Set Default Proof Using "All".
+
+(* This lemma is outside the current translation. 
+   The copy owns fresh mutable storage; the source is preserved. *)
+Lemma wp_ReplicaSet__DeepCopy rs_l rs_phy rs dq_ptr dq :
+  {{{ is_pkg_init code.k8s_io.api.apps.v1.pkg_id.v1 ∗
+      rs_l ↦{dq_ptr} rs_phy ∗
+      ReplicaSetV.deepown rs_phy rs dq
+  }}}
+    rs_l @! (go.PointerType api_apps_v1.ReplicaSet) @! "DeepCopy" #()
+  {{{ rs_copy_l, RET #rs_copy_l;
+      ReplicaSetV.deepown_l rs_copy_l rs 1 ∗
+      rs_l ↦{dq_ptr} rs_phy ∗
+      ReplicaSetV.deepown rs_phy rs dq
+  }}}.
+Proof. Admitted.
 
 Lemma get_owner_references_capability_ReplicaSet rs_l rs dq :
   ⊢ get_owner_references_capability

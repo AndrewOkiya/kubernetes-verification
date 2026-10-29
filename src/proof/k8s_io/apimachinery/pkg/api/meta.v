@@ -1,5 +1,5 @@
 From New.proof Require Import prelude empty_ffi.
-From New.proof.kubernetes_types Require Export prelude.
+From New.object_specs Require Export prelude.
 From New.proof.k8s_io.api.core Require Export v1.
 From New.proof.k8s_io.api.apps Require Export v1.
 From New.proof.k8s_io.apimachinery.pkg.api Require Export meta_init.
@@ -24,7 +24,7 @@ Lemma wp_Accessor i l o:
   }}}.
 Proof.
   wp_start as "H". iNamed "H".
-  destruct o; simpl in Hi; destruct Hi as [-> Hcontains]; wp_auto;
+  destruct o; simpl in Hi; destruct Hi as [-> [Hcontains _]]; wp_auto;
     rewrite Hcontains; wp_auto.
   all: iApply "HΦ"; done.
 Qed.

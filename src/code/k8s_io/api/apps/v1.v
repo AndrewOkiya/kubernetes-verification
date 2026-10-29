@@ -2,6 +2,7 @@
 Require Export New.code.k8s_io.api.core.v1.
 Require Export New.code.k8s_io.apimachinery.pkg.apis.meta.v1.
 Require Export New.code.k8s_io.apimachinery.pkg.util.intstr.
+Require Export New.code.k8s_io.apimachinery.pkg.runtime.
 Require Export New.code.k8s_io.apimachinery.pkg.runtime.schema.
 Module core_v1 := code.k8s_io.api.core.v1.v1.
 Module meta_v1 := code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.
@@ -169,57 +170,21 @@ Definition ControllerRevisionList {ext : ffi_syntax} {go_gctx : GoGlobalContext}
 
 #[global] Opaque ControllerRevisionList.
 
-Axiom PodManagementPolicyTypeⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom StatefulSetUpdateStrategyⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom StatefulSetUpdateStrategyTypeⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom RollingUpdateStatefulSetStrategyⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom StatefulSetOrdinalsⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom StatefulSetConditionTypeⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom StatefulSetConditionⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
 Axiom StatefulSetListⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
 Axiom DeploymentListⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetUpdateStrategyⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetUpdateStrategyTypeⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom RollingUpdateDaemonSetⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetSpecⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetStatusⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetConditionTypeⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetConditionⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
-Axiom DaemonSetⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
 Axiom DaemonSetListⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
 Axiom ReplicaSetListⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
-Axiom ControllerRevisionⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
 Axiom ControllerRevisionListⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
 Definition GroupName {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"apps"%go.
 
-Axiom ControllerRevisionHashLabelKey : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition ControllerRevisionHashLabelKey {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"controller-revision-hash"%go.
 
-Axiom StatefulSetRevisionLabel : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition StatefulSetRevisionLabel {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"controller-revision-hash"%go.
 
 Axiom DeprecatedRollbackTo : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 
@@ -229,19 +194,19 @@ Definition StatefulSetPodNameLabel {ext : ffi_syntax} {go_gctx : GoGlobalContext
 
 Definition PodIndexLabel {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"apps.kubernetes.io/pod-index"%go.
 
-Axiom OrderedReadyPodManagement : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition OrderedReadyPodManagement {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"OrderedReady"%go.
 
-Axiom ParallelPodManagement : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition ParallelPodManagement {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"Parallel"%go.
 
-Axiom RollingUpdateStatefulSetStrategyType : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition RollingUpdateStatefulSetStrategyType {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"RollingUpdate"%go.
 
-Axiom OnDeleteStatefulSetStrategyType : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition OnDeleteStatefulSetStrategyType {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"OnDelete"%go.
 
 Axiom RetainPersistentVolumeClaimRetentionPolicyType : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 
 Axiom DeletePersistentVolumeClaimRetentionPolicyType : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 
-Axiom DefaultDeploymentUniqueLabelKey : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition DefaultDeploymentUniqueLabelKey {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"pod-template-hash"%go.
 
 Definition RecreateDeploymentStrategyType {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"Recreate"%go.
 
@@ -253,13 +218,13 @@ Axiom DeploymentProgressing : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}
 
 Axiom DeploymentReplicaFailure : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 
-Axiom RollingUpdateDaemonSetStrategyType : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition RollingUpdateDaemonSetStrategyType {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"RollingUpdate"%go.
 
-Axiom OnDeleteDaemonSetStrategyType : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition OnDeleteDaemonSetStrategyType {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"OnDelete"%go.
 
 Axiom DefaultDaemonSetUniqueLabelKey : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 
-Axiom ReplicaSetReplicaFailure : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
+Definition ReplicaSetReplicaFailure {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val := #"ReplicaFailure"%go.
 
 Definition xxx_messageInfo_ControllerRevision {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go_string := "k8s.io/api/apps/v1.xxx_messageInfo_ControllerRevision"%go.
 
@@ -487,7 +452,7 @@ Definition addKnownTypes {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go_str
 
 #[global] Instance info' : PkgInfo pkg_id.v1 :=
 {|
-  pkg_imported_pkgs := [code.k8s_io.api.core.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.apis.meta.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.util.intstr.pkg_id.intstr; code.k8s_io.apimachinery.pkg.runtime.schema.pkg_id.schema]
+  pkg_imported_pkgs := [code.k8s_io.api.core.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.apis.meta.v1.pkg_id.v1; code.k8s_io.apimachinery.pkg.util.intstr.pkg_id.intstr; code.k8s_io.apimachinery.pkg.runtime.pkg_id.runtime; code.k8s_io.apimachinery.pkg.runtime.schema.pkg_id.schema]
 |}.
 
 Axiom _'init : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
@@ -495,11 +460,12 @@ Axiom _'init : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 Definition initialize' {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
   λ: <>,
     package.init pkg_id.v1 (λ: <>,
-      exception_do (do:  (go.GlobalAlloc SchemeGroupVersion schema.GroupVersion #());;;
-      do:  (schema.initialize' #());;;
-      do:  (intstr.initialize' #());;;
-      do:  (meta_v1.initialize' #());;;
-      do:  (core_v1.initialize' #());;;
+      exception_do (do:  (go.GlobalAlloc SchemeGroupVersion code.k8s_io.apimachinery.pkg.runtime.schema.schema.GroupVersion #());;;
+      do:  (code.k8s_io.apimachinery.pkg.runtime.schema.schema.initialize' #());;;
+      do:  (code.k8s_io.apimachinery.pkg.runtime.runtime.initialize' #());;;
+      do:  (code.k8s_io.apimachinery.pkg.util.intstr.intstr.initialize' #());;;
+      do:  (code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.initialize' #());;;
+      do:  (code.k8s_io.api.core.v1.v1.initialize' #());;;
       do:  (_'init #());;;
       do:  (_'init #());;;
       do:  (_'init #());;;
@@ -509,8 +475,8 @@ Definition initialize' {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
       do:  (ErrUnexpectedEndOfGroupGenerated'init #());;;
       let: "$r0" := (let: "$v0" := (Convert go.untyped_string go.string GroupName) in
       let: "$v1" := #"v1"%go in
-      CompositeLiteral schema.GroupVersion (LiteralValue [KeyedElement (Some (KeyField "Group"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Version"%go)) (ElementExpression go.string "$v1")])) in
-      do:  ((GlobalVarAddr SchemeGroupVersion #()) <-[schema.GroupVersion] "$r0");;;
+      CompositeLiteral code.k8s_io.apimachinery.pkg.runtime.schema.schema.GroupVersion (LiteralValue [KeyedElement (Some (KeyField "Group"%go)) (ElementExpression go.string "$v0"); KeyedElement (Some (KeyField "Version"%go)) (ElementExpression go.string "$v1")])) in
+      do:  ((GlobalVarAddr SchemeGroupVersion #()) <-[code.k8s_io.apimachinery.pkg.runtime.schema.schema.GroupVersion] "$r0");;;
       do:  (SchemeBuilder'init #());;;
       do:  (localSchemeBuilder'init #());;;
       do:  (AddToScheme'init #());;;
@@ -549,33 +515,66 @@ Definition initialize' {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
 Module PodManagementPolicyType.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Definition t : Type := go_string.
+#[global] Arguments t : clear implicits.
 End def.
 End PodManagementPolicyType.
 
+Definition PodManagementPolicyTypeⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.string.
+
 Class PodManagementPolicyType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
-  #[global] PodManagementPolicyType_type_repr  :: go.TypeReprUnderlying PodManagementPolicyTypeⁱᵐᵖˡ PodManagementPolicyType.t;
   #[global] PodManagementPolicyType_underlying :: (PodManagementPolicyType) <u (PodManagementPolicyTypeⁱᵐᵖˡ);
-  #[global] PodManagementPolicyTypeⁱᵐᵖˡ_underlying :: (PodManagementPolicyTypeⁱᵐᵖˡ) ↓u (PodManagementPolicyTypeⁱᵐᵖˡ);
+}.
+
+Module StatefulSetUpdateStrategyType.
+Section def.
+Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
+Definition t : Type := go_string.
+#[global] Arguments t : clear implicits.
+End def.
+End StatefulSetUpdateStrategyType.
+
+Definition StatefulSetUpdateStrategyTypeⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.string.
+
+Class StatefulSetUpdateStrategyType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
+{
+  #[global] StatefulSetUpdateStrategyType_underlying :: (StatefulSetUpdateStrategyType) <u (StatefulSetUpdateStrategyTypeⁱᵐᵖˡ);
 }.
 
 Module StatefulSetUpdateStrategy.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Type' : v1.StatefulSetUpdateStrategyType.t;
+  RollingUpdate' : loc;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End StatefulSetUpdateStrategy.
+
+Definition StatefulSetUpdateStrategy'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Type"%go StatefulSetUpdateStrategyType);
+  (go.FieldDecl "RollingUpdate"%go (go.PointerType RollingUpdateStatefulSetStrategy))
+].
+Program Definition StatefulSetUpdateStrategy'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (StatefulSetUpdateStrategy'fds_unsealed).
+Global Instance equals_unfold_StatefulSetUpdateStrategy {ext : ffi_syntax} {go_gctx : GoGlobalContext} : StatefulSetUpdateStrategy'fds =→ StatefulSetUpdateStrategy'fds_unsealed.
+Proof. rewrite /StatefulSetUpdateStrategy'fds seal_eq //. Qed.
+
+Definition StatefulSetUpdateStrategyⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (StatefulSetUpdateStrategy'fds).
 
 Class StatefulSetUpdateStrategy_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] StatefulSetUpdateStrategy_type_repr  :: go.TypeReprUnderlying StatefulSetUpdateStrategyⁱᵐᵖˡ StatefulSetUpdateStrategy.t;
   #[global] StatefulSetUpdateStrategy_underlying :: (StatefulSetUpdateStrategy) <u (StatefulSetUpdateStrategyⁱᵐᵖˡ);
-  #[global] StatefulSetUpdateStrategyⁱᵐᵖˡ_underlying :: (StatefulSetUpdateStrategyⁱᵐᵖˡ) ↓u (StatefulSetUpdateStrategyⁱᵐᵖˡ);
+  #[global] StatefulSetUpdateStrategy_get_Type (x : StatefulSetUpdateStrategy.t) :: ⟦StructFieldGet (StatefulSetUpdateStrategyⁱᵐᵖˡ) "Type", #x⟧ ⤳[under] #x.(StatefulSetUpdateStrategy.Type');
+  #[global] StatefulSetUpdateStrategy_set_Type (x : StatefulSetUpdateStrategy.t) y :: ⟦StructFieldSet (StatefulSetUpdateStrategyⁱᵐᵖˡ) "Type", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetUpdateStrategy.Type' := y|>);
+  #[global] StatefulSetUpdateStrategy_get_RollingUpdate (x : StatefulSetUpdateStrategy.t) :: ⟦StructFieldGet (StatefulSetUpdateStrategyⁱᵐᵖˡ) "RollingUpdate", #x⟧ ⤳[under] #x.(StatefulSetUpdateStrategy.RollingUpdate');
+  #[global] StatefulSetUpdateStrategy_set_RollingUpdate (x : StatefulSetUpdateStrategy.t) y :: ⟦StructFieldSet (StatefulSetUpdateStrategyⁱᵐᵖˡ) "RollingUpdate", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetUpdateStrategy.RollingUpdate' := y|>);
 }.
 
 Module StatefulSetSpec.
@@ -585,7 +584,7 @@ Record t :=
 mk {
   Replicas' : loc;
   Selector' : loc;
-  Template' : core_v1.PodTemplateSpec.t;
+  Template' : code.k8s_io.api.core.v1.v1.PodTemplateSpec.t;
   VolumeClaimTemplates' : slice.t;
   ServiceName' : go_string;
   PodManagementPolicy' : v1.PodManagementPolicyType.t;
@@ -604,9 +603,9 @@ End StatefulSetSpec.
 
 Definition StatefulSetSpec'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
   (go.FieldDecl "Replicas"%go (go.PointerType go.int32));
-  (go.FieldDecl "Selector"%go (go.PointerType meta_v1.LabelSelector));
-  (go.FieldDecl "Template"%go core_v1.PodTemplateSpec);
-  (go.FieldDecl "VolumeClaimTemplates"%go (go.SliceType core_v1.PersistentVolumeClaim));
+  (go.FieldDecl "Selector"%go (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.LabelSelector));
+  (go.FieldDecl "Template"%go code.k8s_io.api.core.v1.v1.PodTemplateSpec);
+  (go.FieldDecl "VolumeClaimTemplates"%go (go.SliceType code.k8s_io.api.core.v1.v1.PersistentVolumeClaim));
   (go.FieldDecl "ServiceName"%go go.string);
   (go.FieldDecl "PodManagementPolicy"%go PodManagementPolicyType);
   (go.FieldDecl "UpdateStrategy"%go StatefulSetUpdateStrategy);
@@ -721,8 +720,8 @@ Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
 Record t :=
 mk {
-  TypeMeta' : meta_v1.TypeMeta.t;
-  ObjectMeta' : meta_v1.ObjectMeta.t;
+  TypeMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta.t;
+  ObjectMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta.t;
   Spec' : v1.StatefulSetSpec.t;
   Status' : v1.StatefulSetStatus.t;
 }.
@@ -734,8 +733,8 @@ End def.
 End StatefulSet.
 
 Definition StatefulSet'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
-  (go.EmbeddedField "TypeMeta"%go meta_v1.TypeMeta);
-  (go.EmbeddedField "ObjectMeta"%go meta_v1.ObjectMeta);
+  (go.EmbeddedField "TypeMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta);
+  (go.EmbeddedField "ObjectMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta);
   (go.FieldDecl "Spec"%go StatefulSetSpec);
   (go.FieldDecl "Status"%go StatefulSetStatus)
 ].
@@ -757,137 +756,203 @@ Class StatefulSet_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalC
   #[global] StatefulSet_set_Spec (x : StatefulSet.t) y :: ⟦StructFieldSet (StatefulSetⁱᵐᵖˡ) "Spec", (#x, #y)⟧ ⤳[under] #(x <|StatefulSet.Spec' := y|>);
   #[global] StatefulSet_get_Status (x : StatefulSet.t) :: ⟦StructFieldGet (StatefulSetⁱᵐᵖˡ) "Status", #x⟧ ⤳[under] #x.(StatefulSet.Status');
   #[global] StatefulSet_set_Status (x : StatefulSet.t) y :: ⟦StructFieldSet (StatefulSetⁱᵐᵖˡ) "Status", (#x, #y)⟧ ⤳[under] #(x <|StatefulSet.Status' := y|>);
-  #[global] StatefulSet'ptr_GetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetDeletionGracePeriodSeconds" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetDeletionTimestamp" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetFinalizers_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetFinalizers" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetFinalizers" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetGenerateName_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetGenerateName" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetGenerateName" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetGeneration_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetGeneration" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetGeneration" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetLabels_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetLabels" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetLabels" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetName_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetName" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetName" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetOwnerReferences_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetOwnerReferences" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetOwnerReferences" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetResourceVersion_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetResourceVersion" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetResourceVersion" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_GetUID_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetUID" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetUID" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetCreationTimestamp_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetCreationTimestamp" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetCreationTimestamp" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetDeletionGracePeriodSeconds" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetDeletionTimestamp" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetFinalizers_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetFinalizers" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetFinalizers" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetGeneration_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetGeneration" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetGeneration" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetName_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetName" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetName" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetResourceVersion_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetResourceVersion" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetResourceVersion" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetSelfLink_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetSelfLink" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetSelfLink" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-  #[global] StatefulSet'ptr_SetUID_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetUID" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetUID" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
-}.
-
-Module StatefulSetUpdateStrategyType.
-Section def.
-Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
-End def.
-End StatefulSetUpdateStrategyType.
-
-Class StatefulSetUpdateStrategyType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
-{
-  #[global] StatefulSetUpdateStrategyType_type_repr  :: go.TypeReprUnderlying StatefulSetUpdateStrategyTypeⁱᵐᵖˡ StatefulSetUpdateStrategyType.t;
-  #[global] StatefulSetUpdateStrategyType_underlying :: (StatefulSetUpdateStrategyType) <u (StatefulSetUpdateStrategyTypeⁱᵐᵖˡ);
-  #[global] StatefulSetUpdateStrategyTypeⁱᵐᵖˡ_underlying :: (StatefulSetUpdateStrategyTypeⁱᵐᵖˡ) ↓u (StatefulSetUpdateStrategyTypeⁱᵐᵖˡ);
+  #[global] StatefulSet'ptr_GetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionGracePeriodSeconds" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionTimestamp" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetFinalizers_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetFinalizers" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetGenerateName_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetGenerateName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGenerateName" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetGeneration_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGeneration" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetLabels_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetLabels" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetLabels" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetName_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetName" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetOwnerReferences_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetOwnerReferences" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetOwnerReferences" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetResourceVersion_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetResourceVersion" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_GetUID_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "GetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetUID" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetCreationTimestamp_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetCreationTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetCreationTimestamp" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionGracePeriodSeconds" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionTimestamp" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetFinalizers_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetFinalizers" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetGeneration_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetGeneration" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetName_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetName" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetResourceVersion_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetResourceVersion" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetSelfLink_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetSelfLink" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetSelfLink" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
+  #[global] StatefulSet'ptr_SetUID_unfold :: MethodUnfold (go.PointerType (StatefulSet)) "SetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetUID" (StructFieldRef StatefulSet "ObjectMeta"%go "$r"));
 }.
 
 Module RollingUpdateStatefulSetStrategy.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Partition' : loc;
+  MaxUnavailable' : loc;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End RollingUpdateStatefulSetStrategy.
+
+Definition RollingUpdateStatefulSetStrategy'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Partition"%go (go.PointerType go.int32));
+  (go.FieldDecl "MaxUnavailable"%go (go.PointerType code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString))
+].
+Program Definition RollingUpdateStatefulSetStrategy'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (RollingUpdateStatefulSetStrategy'fds_unsealed).
+Global Instance equals_unfold_RollingUpdateStatefulSetStrategy {ext : ffi_syntax} {go_gctx : GoGlobalContext} : RollingUpdateStatefulSetStrategy'fds =→ RollingUpdateStatefulSetStrategy'fds_unsealed.
+Proof. rewrite /RollingUpdateStatefulSetStrategy'fds seal_eq //. Qed.
+
+Definition RollingUpdateStatefulSetStrategyⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (RollingUpdateStatefulSetStrategy'fds).
 
 Class RollingUpdateStatefulSetStrategy_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] RollingUpdateStatefulSetStrategy_type_repr  :: go.TypeReprUnderlying RollingUpdateStatefulSetStrategyⁱᵐᵖˡ RollingUpdateStatefulSetStrategy.t;
   #[global] RollingUpdateStatefulSetStrategy_underlying :: (RollingUpdateStatefulSetStrategy) <u (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ);
-  #[global] RollingUpdateStatefulSetStrategyⁱᵐᵖˡ_underlying :: (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ) ↓u (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ);
+  #[global] RollingUpdateStatefulSetStrategy_get_Partition (x : RollingUpdateStatefulSetStrategy.t) :: ⟦StructFieldGet (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ) "Partition", #x⟧ ⤳[under] #x.(RollingUpdateStatefulSetStrategy.Partition');
+  #[global] RollingUpdateStatefulSetStrategy_set_Partition (x : RollingUpdateStatefulSetStrategy.t) y :: ⟦StructFieldSet (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ) "Partition", (#x, #y)⟧ ⤳[under] #(x <|RollingUpdateStatefulSetStrategy.Partition' := y|>);
+  #[global] RollingUpdateStatefulSetStrategy_get_MaxUnavailable (x : RollingUpdateStatefulSetStrategy.t) :: ⟦StructFieldGet (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ) "MaxUnavailable", #x⟧ ⤳[under] #x.(RollingUpdateStatefulSetStrategy.MaxUnavailable');
+  #[global] RollingUpdateStatefulSetStrategy_set_MaxUnavailable (x : RollingUpdateStatefulSetStrategy.t) y :: ⟦StructFieldSet (RollingUpdateStatefulSetStrategyⁱᵐᵖˡ) "MaxUnavailable", (#x, #y)⟧ ⤳[under] #(x <|RollingUpdateStatefulSetStrategy.MaxUnavailable' := y|>);
 }.
 
 Module PersistentVolumeClaimRetentionPolicyType.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Definition t : Type := go_string.
+#[global] Arguments t : clear implicits.
 End def.
 End PersistentVolumeClaimRetentionPolicyType.
 
+Definition PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.string.
+
 Class PersistentVolumeClaimRetentionPolicyType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
-  #[global] PersistentVolumeClaimRetentionPolicyType_type_repr  :: go.TypeReprUnderlying PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ PersistentVolumeClaimRetentionPolicyType.t;
   #[global] PersistentVolumeClaimRetentionPolicyType_underlying :: (PersistentVolumeClaimRetentionPolicyType) <u (PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ);
-  #[global] PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ_underlying :: (PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ) ↓u (PersistentVolumeClaimRetentionPolicyTypeⁱᵐᵖˡ);
 }.
 
 Module StatefulSetPersistentVolumeClaimRetentionPolicy.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  WhenDeleted' : v1.PersistentVolumeClaimRetentionPolicyType.t;
+  WhenScaled' : v1.PersistentVolumeClaimRetentionPolicyType.t;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End StatefulSetPersistentVolumeClaimRetentionPolicy.
+
+Definition StatefulSetPersistentVolumeClaimRetentionPolicy'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "WhenDeleted"%go PersistentVolumeClaimRetentionPolicyType);
+  (go.FieldDecl "WhenScaled"%go PersistentVolumeClaimRetentionPolicyType)
+].
+Program Definition StatefulSetPersistentVolumeClaimRetentionPolicy'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (StatefulSetPersistentVolumeClaimRetentionPolicy'fds_unsealed).
+Global Instance equals_unfold_StatefulSetPersistentVolumeClaimRetentionPolicy {ext : ffi_syntax} {go_gctx : GoGlobalContext} : StatefulSetPersistentVolumeClaimRetentionPolicy'fds =→ StatefulSetPersistentVolumeClaimRetentionPolicy'fds_unsealed.
+Proof. rewrite /StatefulSetPersistentVolumeClaimRetentionPolicy'fds seal_eq //. Qed.
+
+Definition StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (StatefulSetPersistentVolumeClaimRetentionPolicy'fds).
 
 Class StatefulSetPersistentVolumeClaimRetentionPolicy_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] StatefulSetPersistentVolumeClaimRetentionPolicy_type_repr  :: go.TypeReprUnderlying StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ StatefulSetPersistentVolumeClaimRetentionPolicy.t;
   #[global] StatefulSetPersistentVolumeClaimRetentionPolicy_underlying :: (StatefulSetPersistentVolumeClaimRetentionPolicy) <u (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ);
-  #[global] StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ_underlying :: (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ) ↓u (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ);
+  #[global] StatefulSetPersistentVolumeClaimRetentionPolicy_get_WhenDeleted (x : StatefulSetPersistentVolumeClaimRetentionPolicy.t) :: ⟦StructFieldGet (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ) "WhenDeleted", #x⟧ ⤳[under] #x.(StatefulSetPersistentVolumeClaimRetentionPolicy.WhenDeleted');
+  #[global] StatefulSetPersistentVolumeClaimRetentionPolicy_set_WhenDeleted (x : StatefulSetPersistentVolumeClaimRetentionPolicy.t) y :: ⟦StructFieldSet (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ) "WhenDeleted", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetPersistentVolumeClaimRetentionPolicy.WhenDeleted' := y|>);
+  #[global] StatefulSetPersistentVolumeClaimRetentionPolicy_get_WhenScaled (x : StatefulSetPersistentVolumeClaimRetentionPolicy.t) :: ⟦StructFieldGet (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ) "WhenScaled", #x⟧ ⤳[under] #x.(StatefulSetPersistentVolumeClaimRetentionPolicy.WhenScaled');
+  #[global] StatefulSetPersistentVolumeClaimRetentionPolicy_set_WhenScaled (x : StatefulSetPersistentVolumeClaimRetentionPolicy.t) y :: ⟦StructFieldSet (StatefulSetPersistentVolumeClaimRetentionPolicyⁱᵐᵖˡ) "WhenScaled", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetPersistentVolumeClaimRetentionPolicy.WhenScaled' := y|>);
 }.
 
 Module StatefulSetOrdinals.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Start' : w32;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End StatefulSetOrdinals.
+
+Definition StatefulSetOrdinals'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Start"%go go.int32)
+].
+Program Definition StatefulSetOrdinals'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (StatefulSetOrdinals'fds_unsealed).
+Global Instance equals_unfold_StatefulSetOrdinals {ext : ffi_syntax} {go_gctx : GoGlobalContext} : StatefulSetOrdinals'fds =→ StatefulSetOrdinals'fds_unsealed.
+Proof. rewrite /StatefulSetOrdinals'fds seal_eq //. Qed.
+
+Definition StatefulSetOrdinalsⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (StatefulSetOrdinals'fds).
 
 Class StatefulSetOrdinals_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] StatefulSetOrdinals_type_repr  :: go.TypeReprUnderlying StatefulSetOrdinalsⁱᵐᵖˡ StatefulSetOrdinals.t;
   #[global] StatefulSetOrdinals_underlying :: (StatefulSetOrdinals) <u (StatefulSetOrdinalsⁱᵐᵖˡ);
-  #[global] StatefulSetOrdinalsⁱᵐᵖˡ_underlying :: (StatefulSetOrdinalsⁱᵐᵖˡ) ↓u (StatefulSetOrdinalsⁱᵐᵖˡ);
+  #[global] StatefulSetOrdinals_get_Start (x : StatefulSetOrdinals.t) :: ⟦StructFieldGet (StatefulSetOrdinalsⁱᵐᵖˡ) "Start", #x⟧ ⤳[under] #x.(StatefulSetOrdinals.Start');
+  #[global] StatefulSetOrdinals_set_Start (x : StatefulSetOrdinals.t) y :: ⟦StructFieldSet (StatefulSetOrdinalsⁱᵐᵖˡ) "Start", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetOrdinals.Start' := y|>);
 }.
 
 Module StatefulSetConditionType.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Definition t : Type := go_string.
+#[global] Arguments t : clear implicits.
 End def.
 End StatefulSetConditionType.
 
+Definition StatefulSetConditionTypeⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.string.
+
 Class StatefulSetConditionType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
-  #[global] StatefulSetConditionType_type_repr  :: go.TypeReprUnderlying StatefulSetConditionTypeⁱᵐᵖˡ StatefulSetConditionType.t;
   #[global] StatefulSetConditionType_underlying :: (StatefulSetConditionType) <u (StatefulSetConditionTypeⁱᵐᵖˡ);
-  #[global] StatefulSetConditionTypeⁱᵐᵖˡ_underlying :: (StatefulSetConditionTypeⁱᵐᵖˡ) ↓u (StatefulSetConditionTypeⁱᵐᵖˡ);
 }.
 
 Module StatefulSetCondition.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Type' : v1.StatefulSetConditionType.t;
+  Status' : code.k8s_io.api.core.v1.v1.ConditionStatus.t;
+  LastTransitionTime' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time.t;
+  Reason' : go_string;
+  Message' : go_string;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End StatefulSetCondition.
+
+Definition StatefulSetCondition'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Type"%go StatefulSetConditionType);
+  (go.FieldDecl "Status"%go code.k8s_io.api.core.v1.v1.ConditionStatus);
+  (go.FieldDecl "LastTransitionTime"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time);
+  (go.FieldDecl "Reason"%go go.string);
+  (go.FieldDecl "Message"%go go.string)
+].
+Program Definition StatefulSetCondition'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (StatefulSetCondition'fds_unsealed).
+Global Instance equals_unfold_StatefulSetCondition {ext : ffi_syntax} {go_gctx : GoGlobalContext} : StatefulSetCondition'fds =→ StatefulSetCondition'fds_unsealed.
+Proof. rewrite /StatefulSetCondition'fds seal_eq //. Qed.
+
+Definition StatefulSetConditionⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (StatefulSetCondition'fds).
 
 Class StatefulSetCondition_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] StatefulSetCondition_type_repr  :: go.TypeReprUnderlying StatefulSetConditionⁱᵐᵖˡ StatefulSetCondition.t;
   #[global] StatefulSetCondition_underlying :: (StatefulSetCondition) <u (StatefulSetConditionⁱᵐᵖˡ);
-  #[global] StatefulSetConditionⁱᵐᵖˡ_underlying :: (StatefulSetConditionⁱᵐᵖˡ) ↓u (StatefulSetConditionⁱᵐᵖˡ);
+  #[global] StatefulSetCondition_get_Type (x : StatefulSetCondition.t) :: ⟦StructFieldGet (StatefulSetConditionⁱᵐᵖˡ) "Type", #x⟧ ⤳[under] #x.(StatefulSetCondition.Type');
+  #[global] StatefulSetCondition_set_Type (x : StatefulSetCondition.t) y :: ⟦StructFieldSet (StatefulSetConditionⁱᵐᵖˡ) "Type", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetCondition.Type' := y|>);
+  #[global] StatefulSetCondition_get_Status (x : StatefulSetCondition.t) :: ⟦StructFieldGet (StatefulSetConditionⁱᵐᵖˡ) "Status", #x⟧ ⤳[under] #x.(StatefulSetCondition.Status');
+  #[global] StatefulSetCondition_set_Status (x : StatefulSetCondition.t) y :: ⟦StructFieldSet (StatefulSetConditionⁱᵐᵖˡ) "Status", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetCondition.Status' := y|>);
+  #[global] StatefulSetCondition_get_LastTransitionTime (x : StatefulSetCondition.t) :: ⟦StructFieldGet (StatefulSetConditionⁱᵐᵖˡ) "LastTransitionTime", #x⟧ ⤳[under] #x.(StatefulSetCondition.LastTransitionTime');
+  #[global] StatefulSetCondition_set_LastTransitionTime (x : StatefulSetCondition.t) y :: ⟦StructFieldSet (StatefulSetConditionⁱᵐᵖˡ) "LastTransitionTime", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetCondition.LastTransitionTime' := y|>);
+  #[global] StatefulSetCondition_get_Reason (x : StatefulSetCondition.t) :: ⟦StructFieldGet (StatefulSetConditionⁱᵐᵖˡ) "Reason", #x⟧ ⤳[under] #x.(StatefulSetCondition.Reason');
+  #[global] StatefulSetCondition_set_Reason (x : StatefulSetCondition.t) y :: ⟦StructFieldSet (StatefulSetConditionⁱᵐᵖˡ) "Reason", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetCondition.Reason' := y|>);
+  #[global] StatefulSetCondition_get_Message (x : StatefulSetCondition.t) :: ⟦StructFieldGet (StatefulSetConditionⁱᵐᵖˡ) "Message", #x⟧ ⤳[under] #x.(StatefulSetCondition.Message');
+  #[global] StatefulSetCondition_set_Message (x : StatefulSetCondition.t) y :: ⟦StructFieldSet (StatefulSetConditionⁱᵐᵖˡ) "Message", (#x, #y)⟧ ⤳[under] #(x <|StatefulSetCondition.Message' := y|>);
 }.
 
 Module StatefulSetList.
@@ -963,7 +1028,7 @@ Record t :=
 mk {
   Replicas' : loc;
   Selector' : loc;
-  Template' : core_v1.PodTemplateSpec.t;
+  Template' : code.k8s_io.api.core.v1.v1.PodTemplateSpec.t;
   Strategy' : v1.DeploymentStrategy.t;
   MinReadySeconds' : w32;
   RevisionHistoryLimit' : loc;
@@ -979,8 +1044,8 @@ End DeploymentSpec.
 
 Definition DeploymentSpec'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
   (go.FieldDecl "Replicas"%go (go.PointerType go.int32));
-  (go.FieldDecl "Selector"%go (go.PointerType meta_v1.LabelSelector));
-  (go.FieldDecl "Template"%go core_v1.PodTemplateSpec);
+  (go.FieldDecl "Selector"%go (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.LabelSelector));
+  (go.FieldDecl "Template"%go code.k8s_io.api.core.v1.v1.PodTemplateSpec);
   (go.FieldDecl "Strategy"%go DeploymentStrategy);
   (go.FieldDecl "MinReadySeconds"%go go.int32);
   (go.FieldDecl "RevisionHistoryLimit"%go (go.PointerType go.int32));
@@ -1083,8 +1148,8 @@ Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
 Record t :=
 mk {
-  TypeMeta' : meta_v1.TypeMeta.t;
-  ObjectMeta' : meta_v1.ObjectMeta.t;
+  TypeMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta.t;
+  ObjectMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta.t;
   Spec' : v1.DeploymentSpec.t;
   Status' : v1.DeploymentStatus.t;
 }.
@@ -1096,8 +1161,8 @@ End def.
 End Deployment.
 
 Definition Deployment'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
-  (go.EmbeddedField "TypeMeta"%go meta_v1.TypeMeta);
-  (go.EmbeddedField "ObjectMeta"%go meta_v1.ObjectMeta);
+  (go.EmbeddedField "TypeMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta);
+  (go.EmbeddedField "ObjectMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta);
   (go.FieldDecl "Spec"%go DeploymentSpec);
   (go.FieldDecl "Status"%go DeploymentStatus)
 ].
@@ -1119,6 +1184,25 @@ Class Deployment_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalCo
   #[global] Deployment_set_Spec (x : Deployment.t) y :: ⟦StructFieldSet (Deploymentⁱᵐᵖˡ) "Spec", (#x, #y)⟧ ⤳[under] #(x <|Deployment.Spec' := y|>);
   #[global] Deployment_get_Status (x : Deployment.t) :: ⟦StructFieldGet (Deploymentⁱᵐᵖˡ) "Status", #x⟧ ⤳[under] #x.(Deployment.Status');
   #[global] Deployment_set_Status (x : Deployment.t) y :: ⟦StructFieldSet (Deploymentⁱᵐᵖˡ) "Status", (#x, #y)⟧ ⤳[under] #(x <|Deployment.Status' := y|>);
+  #[global] Deployment'ptr_GetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionGracePeriodSeconds" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionTimestamp" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetFinalizers_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetFinalizers" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetGenerateName_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetGenerateName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGenerateName" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetGeneration_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGeneration" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetLabels_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetLabels" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetLabels" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetName_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetName" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetOwnerReferences_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetOwnerReferences" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetOwnerReferences" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetResourceVersion_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetResourceVersion" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_GetUID_unfold :: MethodUnfold (go.PointerType (Deployment)) "GetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetUID" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetCreationTimestamp_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetCreationTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetCreationTimestamp" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionGracePeriodSeconds" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionTimestamp" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetFinalizers_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetFinalizers" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetGeneration_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetGeneration" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetName_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetName" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetResourceVersion_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetResourceVersion" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetSelfLink_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetSelfLink" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetSelfLink" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
+  #[global] Deployment'ptr_SetUID_unfold :: MethodUnfold (go.PointerType (Deployment)) "SetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetUID" (StructFieldRef Deployment "ObjectMeta"%go "$r"));
 }.
 
 Module RollingUpdateDeployment.
@@ -1137,8 +1221,8 @@ End def.
 End RollingUpdateDeployment.
 
 Definition RollingUpdateDeployment'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
-  (go.FieldDecl "MaxUnavailable"%go (go.PointerType intstr.IntOrString));
-  (go.FieldDecl "MaxSurge"%go (go.PointerType intstr.IntOrString))
+  (go.FieldDecl "MaxUnavailable"%go (go.PointerType code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString));
+  (go.FieldDecl "MaxSurge"%go (go.PointerType code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString))
 ].
 Program Definition RollingUpdateDeployment'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (RollingUpdateDeployment'fds_unsealed).
 Global Instance equals_unfold_RollingUpdateDeployment {ext : ffi_syntax} {go_gctx : GoGlobalContext} : RollingUpdateDeployment'fds =→ RollingUpdateDeployment'fds_unsealed.
@@ -1177,9 +1261,9 @@ Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
 Record t :=
 mk {
   Type' : v1.DeploymentConditionType.t;
-  Status' : core_v1.ConditionStatus.t;
-  LastUpdateTime' : meta_v1.Time.t;
-  LastTransitionTime' : meta_v1.Time.t;
+  Status' : code.k8s_io.api.core.v1.v1.ConditionStatus.t;
+  LastUpdateTime' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time.t;
+  LastTransitionTime' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time.t;
   Reason' : go_string;
   Message' : go_string;
 }.
@@ -1192,9 +1276,9 @@ End DeploymentCondition.
 
 Definition DeploymentCondition'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
   (go.FieldDecl "Type"%go DeploymentConditionType);
-  (go.FieldDecl "Status"%go core_v1.ConditionStatus);
-  (go.FieldDecl "LastUpdateTime"%go meta_v1.Time);
-  (go.FieldDecl "LastTransitionTime"%go meta_v1.Time);
+  (go.FieldDecl "Status"%go code.k8s_io.api.core.v1.v1.ConditionStatus);
+  (go.FieldDecl "LastUpdateTime"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time);
+  (go.FieldDecl "LastTransitionTime"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time);
   (go.FieldDecl "Reason"%go go.string);
   (go.FieldDecl "Message"%go go.string)
 ].
@@ -1238,132 +1322,308 @@ Class DeploymentList_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLoc
   #[global] DeploymentListⁱᵐᵖˡ_underlying :: (DeploymentListⁱᵐᵖˡ) ↓u (DeploymentListⁱᵐᵖˡ);
 }.
 
+Module DaemonSetUpdateStrategyType.
+Section def.
+Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
+Definition t : Type := go_string.
+#[global] Arguments t : clear implicits.
+End def.
+End DaemonSetUpdateStrategyType.
+
+Definition DaemonSetUpdateStrategyTypeⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.string.
+
+Class DaemonSetUpdateStrategyType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
+{
+  #[global] DaemonSetUpdateStrategyType_underlying :: (DaemonSetUpdateStrategyType) <u (DaemonSetUpdateStrategyTypeⁱᵐᵖˡ);
+}.
+
 Module DaemonSetUpdateStrategy.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Type' : v1.DaemonSetUpdateStrategyType.t;
+  RollingUpdate' : loc;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End DaemonSetUpdateStrategy.
+
+Definition DaemonSetUpdateStrategy'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Type"%go DaemonSetUpdateStrategyType);
+  (go.FieldDecl "RollingUpdate"%go (go.PointerType RollingUpdateDaemonSet))
+].
+Program Definition DaemonSetUpdateStrategy'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (DaemonSetUpdateStrategy'fds_unsealed).
+Global Instance equals_unfold_DaemonSetUpdateStrategy {ext : ffi_syntax} {go_gctx : GoGlobalContext} : DaemonSetUpdateStrategy'fds =→ DaemonSetUpdateStrategy'fds_unsealed.
+Proof. rewrite /DaemonSetUpdateStrategy'fds seal_eq //. Qed.
+
+Definition DaemonSetUpdateStrategyⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (DaemonSetUpdateStrategy'fds).
 
 Class DaemonSetUpdateStrategy_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] DaemonSetUpdateStrategy_type_repr  :: go.TypeReprUnderlying DaemonSetUpdateStrategyⁱᵐᵖˡ DaemonSetUpdateStrategy.t;
   #[global] DaemonSetUpdateStrategy_underlying :: (DaemonSetUpdateStrategy) <u (DaemonSetUpdateStrategyⁱᵐᵖˡ);
-  #[global] DaemonSetUpdateStrategyⁱᵐᵖˡ_underlying :: (DaemonSetUpdateStrategyⁱᵐᵖˡ) ↓u (DaemonSetUpdateStrategyⁱᵐᵖˡ);
-}.
-
-Module DaemonSetUpdateStrategyType.
-Section def.
-Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
-End def.
-End DaemonSetUpdateStrategyType.
-
-Class DaemonSetUpdateStrategyType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
-{
-  #[global] DaemonSetUpdateStrategyType_type_repr  :: go.TypeReprUnderlying DaemonSetUpdateStrategyTypeⁱᵐᵖˡ DaemonSetUpdateStrategyType.t;
-  #[global] DaemonSetUpdateStrategyType_underlying :: (DaemonSetUpdateStrategyType) <u (DaemonSetUpdateStrategyTypeⁱᵐᵖˡ);
-  #[global] DaemonSetUpdateStrategyTypeⁱᵐᵖˡ_underlying :: (DaemonSetUpdateStrategyTypeⁱᵐᵖˡ) ↓u (DaemonSetUpdateStrategyTypeⁱᵐᵖˡ);
+  #[global] DaemonSetUpdateStrategy_get_Type (x : DaemonSetUpdateStrategy.t) :: ⟦StructFieldGet (DaemonSetUpdateStrategyⁱᵐᵖˡ) "Type", #x⟧ ⤳[under] #x.(DaemonSetUpdateStrategy.Type');
+  #[global] DaemonSetUpdateStrategy_set_Type (x : DaemonSetUpdateStrategy.t) y :: ⟦StructFieldSet (DaemonSetUpdateStrategyⁱᵐᵖˡ) "Type", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetUpdateStrategy.Type' := y|>);
+  #[global] DaemonSetUpdateStrategy_get_RollingUpdate (x : DaemonSetUpdateStrategy.t) :: ⟦StructFieldGet (DaemonSetUpdateStrategyⁱᵐᵖˡ) "RollingUpdate", #x⟧ ⤳[under] #x.(DaemonSetUpdateStrategy.RollingUpdate');
+  #[global] DaemonSetUpdateStrategy_set_RollingUpdate (x : DaemonSetUpdateStrategy.t) y :: ⟦StructFieldSet (DaemonSetUpdateStrategyⁱᵐᵖˡ) "RollingUpdate", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetUpdateStrategy.RollingUpdate' := y|>);
 }.
 
 Module RollingUpdateDaemonSet.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  MaxUnavailable' : loc;
+  MaxSurge' : loc;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End RollingUpdateDaemonSet.
+
+Definition RollingUpdateDaemonSet'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "MaxUnavailable"%go (go.PointerType code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString));
+  (go.FieldDecl "MaxSurge"%go (go.PointerType code.k8s_io.apimachinery.pkg.util.intstr.intstr.IntOrString))
+].
+Program Definition RollingUpdateDaemonSet'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (RollingUpdateDaemonSet'fds_unsealed).
+Global Instance equals_unfold_RollingUpdateDaemonSet {ext : ffi_syntax} {go_gctx : GoGlobalContext} : RollingUpdateDaemonSet'fds =→ RollingUpdateDaemonSet'fds_unsealed.
+Proof. rewrite /RollingUpdateDaemonSet'fds seal_eq //. Qed.
+
+Definition RollingUpdateDaemonSetⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (RollingUpdateDaemonSet'fds).
 
 Class RollingUpdateDaemonSet_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] RollingUpdateDaemonSet_type_repr  :: go.TypeReprUnderlying RollingUpdateDaemonSetⁱᵐᵖˡ RollingUpdateDaemonSet.t;
   #[global] RollingUpdateDaemonSet_underlying :: (RollingUpdateDaemonSet) <u (RollingUpdateDaemonSetⁱᵐᵖˡ);
-  #[global] RollingUpdateDaemonSetⁱᵐᵖˡ_underlying :: (RollingUpdateDaemonSetⁱᵐᵖˡ) ↓u (RollingUpdateDaemonSetⁱᵐᵖˡ);
+  #[global] RollingUpdateDaemonSet_get_MaxUnavailable (x : RollingUpdateDaemonSet.t) :: ⟦StructFieldGet (RollingUpdateDaemonSetⁱᵐᵖˡ) "MaxUnavailable", #x⟧ ⤳[under] #x.(RollingUpdateDaemonSet.MaxUnavailable');
+  #[global] RollingUpdateDaemonSet_set_MaxUnavailable (x : RollingUpdateDaemonSet.t) y :: ⟦StructFieldSet (RollingUpdateDaemonSetⁱᵐᵖˡ) "MaxUnavailable", (#x, #y)⟧ ⤳[under] #(x <|RollingUpdateDaemonSet.MaxUnavailable' := y|>);
+  #[global] RollingUpdateDaemonSet_get_MaxSurge (x : RollingUpdateDaemonSet.t) :: ⟦StructFieldGet (RollingUpdateDaemonSetⁱᵐᵖˡ) "MaxSurge", #x⟧ ⤳[under] #x.(RollingUpdateDaemonSet.MaxSurge');
+  #[global] RollingUpdateDaemonSet_set_MaxSurge (x : RollingUpdateDaemonSet.t) y :: ⟦StructFieldSet (RollingUpdateDaemonSetⁱᵐᵖˡ) "MaxSurge", (#x, #y)⟧ ⤳[under] #(x <|RollingUpdateDaemonSet.MaxSurge' := y|>);
 }.
 
 Module DaemonSetSpec.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Selector' : loc;
+  Template' : code.k8s_io.api.core.v1.v1.PodTemplateSpec.t;
+  UpdateStrategy' : v1.DaemonSetUpdateStrategy.t;
+  MinReadySeconds' : w32;
+  RevisionHistoryLimit' : loc;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End DaemonSetSpec.
+
+Definition DaemonSetSpec'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Selector"%go (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.LabelSelector));
+  (go.FieldDecl "Template"%go code.k8s_io.api.core.v1.v1.PodTemplateSpec);
+  (go.FieldDecl "UpdateStrategy"%go DaemonSetUpdateStrategy);
+  (go.FieldDecl "MinReadySeconds"%go go.int32);
+  (go.FieldDecl "RevisionHistoryLimit"%go (go.PointerType go.int32))
+].
+Program Definition DaemonSetSpec'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (DaemonSetSpec'fds_unsealed).
+Global Instance equals_unfold_DaemonSetSpec {ext : ffi_syntax} {go_gctx : GoGlobalContext} : DaemonSetSpec'fds =→ DaemonSetSpec'fds_unsealed.
+Proof. rewrite /DaemonSetSpec'fds seal_eq //. Qed.
+
+Definition DaemonSetSpecⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (DaemonSetSpec'fds).
 
 Class DaemonSetSpec_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] DaemonSetSpec_type_repr  :: go.TypeReprUnderlying DaemonSetSpecⁱᵐᵖˡ DaemonSetSpec.t;
   #[global] DaemonSetSpec_underlying :: (DaemonSetSpec) <u (DaemonSetSpecⁱᵐᵖˡ);
-  #[global] DaemonSetSpecⁱᵐᵖˡ_underlying :: (DaemonSetSpecⁱᵐᵖˡ) ↓u (DaemonSetSpecⁱᵐᵖˡ);
+  #[global] DaemonSetSpec_get_Selector (x : DaemonSetSpec.t) :: ⟦StructFieldGet (DaemonSetSpecⁱᵐᵖˡ) "Selector", #x⟧ ⤳[under] #x.(DaemonSetSpec.Selector');
+  #[global] DaemonSetSpec_set_Selector (x : DaemonSetSpec.t) y :: ⟦StructFieldSet (DaemonSetSpecⁱᵐᵖˡ) "Selector", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetSpec.Selector' := y|>);
+  #[global] DaemonSetSpec_get_Template (x : DaemonSetSpec.t) :: ⟦StructFieldGet (DaemonSetSpecⁱᵐᵖˡ) "Template", #x⟧ ⤳[under] #x.(DaemonSetSpec.Template');
+  #[global] DaemonSetSpec_set_Template (x : DaemonSetSpec.t) y :: ⟦StructFieldSet (DaemonSetSpecⁱᵐᵖˡ) "Template", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetSpec.Template' := y|>);
+  #[global] DaemonSetSpec_get_UpdateStrategy (x : DaemonSetSpec.t) :: ⟦StructFieldGet (DaemonSetSpecⁱᵐᵖˡ) "UpdateStrategy", #x⟧ ⤳[under] #x.(DaemonSetSpec.UpdateStrategy');
+  #[global] DaemonSetSpec_set_UpdateStrategy (x : DaemonSetSpec.t) y :: ⟦StructFieldSet (DaemonSetSpecⁱᵐᵖˡ) "UpdateStrategy", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetSpec.UpdateStrategy' := y|>);
+  #[global] DaemonSetSpec_get_MinReadySeconds (x : DaemonSetSpec.t) :: ⟦StructFieldGet (DaemonSetSpecⁱᵐᵖˡ) "MinReadySeconds", #x⟧ ⤳[under] #x.(DaemonSetSpec.MinReadySeconds');
+  #[global] DaemonSetSpec_set_MinReadySeconds (x : DaemonSetSpec.t) y :: ⟦StructFieldSet (DaemonSetSpecⁱᵐᵖˡ) "MinReadySeconds", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetSpec.MinReadySeconds' := y|>);
+  #[global] DaemonSetSpec_get_RevisionHistoryLimit (x : DaemonSetSpec.t) :: ⟦StructFieldGet (DaemonSetSpecⁱᵐᵖˡ) "RevisionHistoryLimit", #x⟧ ⤳[under] #x.(DaemonSetSpec.RevisionHistoryLimit');
+  #[global] DaemonSetSpec_set_RevisionHistoryLimit (x : DaemonSetSpec.t) y :: ⟦StructFieldSet (DaemonSetSpecⁱᵐᵖˡ) "RevisionHistoryLimit", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetSpec.RevisionHistoryLimit' := y|>);
 }.
 
 Module DaemonSetStatus.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  CurrentNumberScheduled' : w32;
+  NumberMisscheduled' : w32;
+  DesiredNumberScheduled' : w32;
+  NumberReady' : w32;
+  ObservedGeneration' : w64;
+  UpdatedNumberScheduled' : w32;
+  NumberAvailable' : w32;
+  NumberUnavailable' : w32;
+  CollisionCount' : loc;
+  Conditions' : slice.t;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End DaemonSetStatus.
+
+Definition DaemonSetStatus'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "CurrentNumberScheduled"%go go.int32);
+  (go.FieldDecl "NumberMisscheduled"%go go.int32);
+  (go.FieldDecl "DesiredNumberScheduled"%go go.int32);
+  (go.FieldDecl "NumberReady"%go go.int32);
+  (go.FieldDecl "ObservedGeneration"%go go.int64);
+  (go.FieldDecl "UpdatedNumberScheduled"%go go.int32);
+  (go.FieldDecl "NumberAvailable"%go go.int32);
+  (go.FieldDecl "NumberUnavailable"%go go.int32);
+  (go.FieldDecl "CollisionCount"%go (go.PointerType go.int32));
+  (go.FieldDecl "Conditions"%go (go.SliceType DaemonSetCondition))
+].
+Program Definition DaemonSetStatus'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (DaemonSetStatus'fds_unsealed).
+Global Instance equals_unfold_DaemonSetStatus {ext : ffi_syntax} {go_gctx : GoGlobalContext} : DaemonSetStatus'fds =→ DaemonSetStatus'fds_unsealed.
+Proof. rewrite /DaemonSetStatus'fds seal_eq //. Qed.
+
+Definition DaemonSetStatusⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (DaemonSetStatus'fds).
 
 Class DaemonSetStatus_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] DaemonSetStatus_type_repr  :: go.TypeReprUnderlying DaemonSetStatusⁱᵐᵖˡ DaemonSetStatus.t;
   #[global] DaemonSetStatus_underlying :: (DaemonSetStatus) <u (DaemonSetStatusⁱᵐᵖˡ);
-  #[global] DaemonSetStatusⁱᵐᵖˡ_underlying :: (DaemonSetStatusⁱᵐᵖˡ) ↓u (DaemonSetStatusⁱᵐᵖˡ);
+  #[global] DaemonSetStatus_get_CurrentNumberScheduled (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "CurrentNumberScheduled", #x⟧ ⤳[under] #x.(DaemonSetStatus.CurrentNumberScheduled');
+  #[global] DaemonSetStatus_set_CurrentNumberScheduled (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "CurrentNumberScheduled", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.CurrentNumberScheduled' := y|>);
+  #[global] DaemonSetStatus_get_NumberMisscheduled (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "NumberMisscheduled", #x⟧ ⤳[under] #x.(DaemonSetStatus.NumberMisscheduled');
+  #[global] DaemonSetStatus_set_NumberMisscheduled (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "NumberMisscheduled", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.NumberMisscheduled' := y|>);
+  #[global] DaemonSetStatus_get_DesiredNumberScheduled (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "DesiredNumberScheduled", #x⟧ ⤳[under] #x.(DaemonSetStatus.DesiredNumberScheduled');
+  #[global] DaemonSetStatus_set_DesiredNumberScheduled (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "DesiredNumberScheduled", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.DesiredNumberScheduled' := y|>);
+  #[global] DaemonSetStatus_get_NumberReady (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "NumberReady", #x⟧ ⤳[under] #x.(DaemonSetStatus.NumberReady');
+  #[global] DaemonSetStatus_set_NumberReady (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "NumberReady", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.NumberReady' := y|>);
+  #[global] DaemonSetStatus_get_ObservedGeneration (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "ObservedGeneration", #x⟧ ⤳[under] #x.(DaemonSetStatus.ObservedGeneration');
+  #[global] DaemonSetStatus_set_ObservedGeneration (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "ObservedGeneration", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.ObservedGeneration' := y|>);
+  #[global] DaemonSetStatus_get_UpdatedNumberScheduled (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "UpdatedNumberScheduled", #x⟧ ⤳[under] #x.(DaemonSetStatus.UpdatedNumberScheduled');
+  #[global] DaemonSetStatus_set_UpdatedNumberScheduled (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "UpdatedNumberScheduled", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.UpdatedNumberScheduled' := y|>);
+  #[global] DaemonSetStatus_get_NumberAvailable (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "NumberAvailable", #x⟧ ⤳[under] #x.(DaemonSetStatus.NumberAvailable');
+  #[global] DaemonSetStatus_set_NumberAvailable (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "NumberAvailable", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.NumberAvailable' := y|>);
+  #[global] DaemonSetStatus_get_NumberUnavailable (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "NumberUnavailable", #x⟧ ⤳[under] #x.(DaemonSetStatus.NumberUnavailable');
+  #[global] DaemonSetStatus_set_NumberUnavailable (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "NumberUnavailable", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.NumberUnavailable' := y|>);
+  #[global] DaemonSetStatus_get_CollisionCount (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "CollisionCount", #x⟧ ⤳[under] #x.(DaemonSetStatus.CollisionCount');
+  #[global] DaemonSetStatus_set_CollisionCount (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "CollisionCount", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.CollisionCount' := y|>);
+  #[global] DaemonSetStatus_get_Conditions (x : DaemonSetStatus.t) :: ⟦StructFieldGet (DaemonSetStatusⁱᵐᵖˡ) "Conditions", #x⟧ ⤳[under] #x.(DaemonSetStatus.Conditions');
+  #[global] DaemonSetStatus_set_Conditions (x : DaemonSetStatus.t) y :: ⟦StructFieldSet (DaemonSetStatusⁱᵐᵖˡ) "Conditions", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetStatus.Conditions' := y|>);
 }.
 
 Module DaemonSetConditionType.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Definition t : Type := go_string.
+#[global] Arguments t : clear implicits.
 End def.
 End DaemonSetConditionType.
 
+Definition DaemonSetConditionTypeⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.string.
+
 Class DaemonSetConditionType_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
-  #[global] DaemonSetConditionType_type_repr  :: go.TypeReprUnderlying DaemonSetConditionTypeⁱᵐᵖˡ DaemonSetConditionType.t;
   #[global] DaemonSetConditionType_underlying :: (DaemonSetConditionType) <u (DaemonSetConditionTypeⁱᵐᵖˡ);
-  #[global] DaemonSetConditionTypeⁱᵐᵖˡ_underlying :: (DaemonSetConditionTypeⁱᵐᵖˡ) ↓u (DaemonSetConditionTypeⁱᵐᵖˡ);
 }.
 
 Module DaemonSetCondition.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Type' : v1.DaemonSetConditionType.t;
+  Status' : code.k8s_io.api.core.v1.v1.ConditionStatus.t;
+  LastTransitionTime' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time.t;
+  Reason' : go_string;
+  Message' : go_string;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End DaemonSetCondition.
+
+Definition DaemonSetCondition'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Type"%go DaemonSetConditionType);
+  (go.FieldDecl "Status"%go code.k8s_io.api.core.v1.v1.ConditionStatus);
+  (go.FieldDecl "LastTransitionTime"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time);
+  (go.FieldDecl "Reason"%go go.string);
+  (go.FieldDecl "Message"%go go.string)
+].
+Program Definition DaemonSetCondition'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (DaemonSetCondition'fds_unsealed).
+Global Instance equals_unfold_DaemonSetCondition {ext : ffi_syntax} {go_gctx : GoGlobalContext} : DaemonSetCondition'fds =→ DaemonSetCondition'fds_unsealed.
+Proof. rewrite /DaemonSetCondition'fds seal_eq //. Qed.
+
+Definition DaemonSetConditionⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (DaemonSetCondition'fds).
 
 Class DaemonSetCondition_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] DaemonSetCondition_type_repr  :: go.TypeReprUnderlying DaemonSetConditionⁱᵐᵖˡ DaemonSetCondition.t;
   #[global] DaemonSetCondition_underlying :: (DaemonSetCondition) <u (DaemonSetConditionⁱᵐᵖˡ);
-  #[global] DaemonSetConditionⁱᵐᵖˡ_underlying :: (DaemonSetConditionⁱᵐᵖˡ) ↓u (DaemonSetConditionⁱᵐᵖˡ);
+  #[global] DaemonSetCondition_get_Type (x : DaemonSetCondition.t) :: ⟦StructFieldGet (DaemonSetConditionⁱᵐᵖˡ) "Type", #x⟧ ⤳[under] #x.(DaemonSetCondition.Type');
+  #[global] DaemonSetCondition_set_Type (x : DaemonSetCondition.t) y :: ⟦StructFieldSet (DaemonSetConditionⁱᵐᵖˡ) "Type", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetCondition.Type' := y|>);
+  #[global] DaemonSetCondition_get_Status (x : DaemonSetCondition.t) :: ⟦StructFieldGet (DaemonSetConditionⁱᵐᵖˡ) "Status", #x⟧ ⤳[under] #x.(DaemonSetCondition.Status');
+  #[global] DaemonSetCondition_set_Status (x : DaemonSetCondition.t) y :: ⟦StructFieldSet (DaemonSetConditionⁱᵐᵖˡ) "Status", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetCondition.Status' := y|>);
+  #[global] DaemonSetCondition_get_LastTransitionTime (x : DaemonSetCondition.t) :: ⟦StructFieldGet (DaemonSetConditionⁱᵐᵖˡ) "LastTransitionTime", #x⟧ ⤳[under] #x.(DaemonSetCondition.LastTransitionTime');
+  #[global] DaemonSetCondition_set_LastTransitionTime (x : DaemonSetCondition.t) y :: ⟦StructFieldSet (DaemonSetConditionⁱᵐᵖˡ) "LastTransitionTime", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetCondition.LastTransitionTime' := y|>);
+  #[global] DaemonSetCondition_get_Reason (x : DaemonSetCondition.t) :: ⟦StructFieldGet (DaemonSetConditionⁱᵐᵖˡ) "Reason", #x⟧ ⤳[under] #x.(DaemonSetCondition.Reason');
+  #[global] DaemonSetCondition_set_Reason (x : DaemonSetCondition.t) y :: ⟦StructFieldSet (DaemonSetConditionⁱᵐᵖˡ) "Reason", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetCondition.Reason' := y|>);
+  #[global] DaemonSetCondition_get_Message (x : DaemonSetCondition.t) :: ⟦StructFieldGet (DaemonSetConditionⁱᵐᵖˡ) "Message", #x⟧ ⤳[under] #x.(DaemonSetCondition.Message');
+  #[global] DaemonSetCondition_set_Message (x : DaemonSetCondition.t) y :: ⟦StructFieldSet (DaemonSetConditionⁱᵐᵖˡ) "Message", (#x, #y)⟧ ⤳[under] #(x <|DaemonSetCondition.Message' := y|>);
 }.
 
 Module DaemonSet.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  TypeMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta.t;
+  ObjectMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta.t;
+  Spec' : v1.DaemonSetSpec.t;
+  Status' : v1.DaemonSetStatus.t;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End DaemonSet.
+
+Definition DaemonSet'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.EmbeddedField "TypeMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta);
+  (go.EmbeddedField "ObjectMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta);
+  (go.FieldDecl "Spec"%go DaemonSetSpec);
+  (go.FieldDecl "Status"%go DaemonSetStatus)
+].
+Program Definition DaemonSet'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (DaemonSet'fds_unsealed).
+Global Instance equals_unfold_DaemonSet {ext : ffi_syntax} {go_gctx : GoGlobalContext} : DaemonSet'fds =→ DaemonSet'fds_unsealed.
+Proof. rewrite /DaemonSet'fds seal_eq //. Qed.
+
+Definition DaemonSetⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (DaemonSet'fds).
 
 Class DaemonSet_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] DaemonSet_type_repr  :: go.TypeReprUnderlying DaemonSetⁱᵐᵖˡ DaemonSet.t;
   #[global] DaemonSet_underlying :: (DaemonSet) <u (DaemonSetⁱᵐᵖˡ);
-  #[global] DaemonSetⁱᵐᵖˡ_underlying :: (DaemonSetⁱᵐᵖˡ) ↓u (DaemonSetⁱᵐᵖˡ);
+  #[global] DaemonSet_get_TypeMeta (x : DaemonSet.t) :: ⟦StructFieldGet (DaemonSetⁱᵐᵖˡ) "TypeMeta", #x⟧ ⤳[under] #x.(DaemonSet.TypeMeta');
+  #[global] DaemonSet_set_TypeMeta (x : DaemonSet.t) y :: ⟦StructFieldSet (DaemonSetⁱᵐᵖˡ) "TypeMeta", (#x, #y)⟧ ⤳[under] #(x <|DaemonSet.TypeMeta' := y|>);
+  #[global] DaemonSet_get_ObjectMeta (x : DaemonSet.t) :: ⟦StructFieldGet (DaemonSetⁱᵐᵖˡ) "ObjectMeta", #x⟧ ⤳[under] #x.(DaemonSet.ObjectMeta');
+  #[global] DaemonSet_set_ObjectMeta (x : DaemonSet.t) y :: ⟦StructFieldSet (DaemonSetⁱᵐᵖˡ) "ObjectMeta", (#x, #y)⟧ ⤳[under] #(x <|DaemonSet.ObjectMeta' := y|>);
+  #[global] DaemonSet_get_Spec (x : DaemonSet.t) :: ⟦StructFieldGet (DaemonSetⁱᵐᵖˡ) "Spec", #x⟧ ⤳[under] #x.(DaemonSet.Spec');
+  #[global] DaemonSet_set_Spec (x : DaemonSet.t) y :: ⟦StructFieldSet (DaemonSetⁱᵐᵖˡ) "Spec", (#x, #y)⟧ ⤳[under] #(x <|DaemonSet.Spec' := y|>);
+  #[global] DaemonSet_get_Status (x : DaemonSet.t) :: ⟦StructFieldGet (DaemonSetⁱᵐᵖˡ) "Status", #x⟧ ⤳[under] #x.(DaemonSet.Status');
+  #[global] DaemonSet_set_Status (x : DaemonSet.t) y :: ⟦StructFieldSet (DaemonSetⁱᵐᵖˡ) "Status", (#x, #y)⟧ ⤳[under] #(x <|DaemonSet.Status' := y|>);
 }.
 
 Module DaemonSetList.
@@ -1390,7 +1650,7 @@ mk {
   Replicas' : loc;
   MinReadySeconds' : w32;
   Selector' : loc;
-  Template' : core_v1.PodTemplateSpec.t;
+  Template' : code.k8s_io.api.core.v1.v1.PodTemplateSpec.t;
 }.
 
 #[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
@@ -1402,8 +1662,8 @@ End ReplicaSetSpec.
 Definition ReplicaSetSpec'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
   (go.FieldDecl "Replicas"%go (go.PointerType go.int32));
   (go.FieldDecl "MinReadySeconds"%go go.int32);
-  (go.FieldDecl "Selector"%go (go.PointerType meta_v1.LabelSelector));
-  (go.FieldDecl "Template"%go core_v1.PodTemplateSpec)
+  (go.FieldDecl "Selector"%go (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.LabelSelector));
+  (go.FieldDecl "Template"%go code.k8s_io.api.core.v1.v1.PodTemplateSpec)
 ].
 Program Definition ReplicaSetSpec'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (ReplicaSetSpec'fds_unsealed).
 Global Instance equals_unfold_ReplicaSetSpec {ext : ffi_syntax} {go_gctx : GoGlobalContext} : ReplicaSetSpec'fds =→ ReplicaSetSpec'fds_unsealed.
@@ -1485,8 +1745,8 @@ Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
 Record t :=
 mk {
-  TypeMeta' : meta_v1.TypeMeta.t;
-  ObjectMeta' : meta_v1.ObjectMeta.t;
+  TypeMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta.t;
+  ObjectMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta.t;
   Spec' : v1.ReplicaSetSpec.t;
   Status' : v1.ReplicaSetStatus.t;
 }.
@@ -1498,8 +1758,8 @@ End def.
 End ReplicaSet.
 
 Definition ReplicaSet'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
-  (go.EmbeddedField "TypeMeta"%go meta_v1.TypeMeta);
-  (go.EmbeddedField "ObjectMeta"%go meta_v1.ObjectMeta);
+  (go.EmbeddedField "TypeMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta);
+  (go.EmbeddedField "ObjectMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta);
   (go.FieldDecl "Spec"%go ReplicaSetSpec);
   (go.FieldDecl "Status"%go ReplicaSetStatus)
 ].
@@ -1521,25 +1781,25 @@ Class ReplicaSet_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalCo
   #[global] ReplicaSet_set_Spec (x : ReplicaSet.t) y :: ⟦StructFieldSet (ReplicaSetⁱᵐᵖˡ) "Spec", (#x, #y)⟧ ⤳[under] #(x <|ReplicaSet.Spec' := y|>);
   #[global] ReplicaSet_get_Status (x : ReplicaSet.t) :: ⟦StructFieldGet (ReplicaSetⁱᵐᵖˡ) "Status", #x⟧ ⤳[under] #x.(ReplicaSet.Status');
   #[global] ReplicaSet_set_Status (x : ReplicaSet.t) y :: ⟦StructFieldSet (ReplicaSetⁱᵐᵖˡ) "Status", (#x, #y)⟧ ⤳[under] #(x <|ReplicaSet.Status' := y|>);
-  #[global] ReplicaSet'ptr_GetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetDeletionGracePeriodSeconds" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetDeletionTimestamp" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetFinalizers_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetFinalizers" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetFinalizers" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetGenerateName_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetGenerateName" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetGenerateName" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetGeneration_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetGeneration" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetGeneration" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetLabels_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetLabels" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetLabels" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetName_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetName" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetName" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetOwnerReferences_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetOwnerReferences" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetOwnerReferences" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetResourceVersion_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetResourceVersion" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetResourceVersion" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_GetUID_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetUID" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "GetUID" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetCreationTimestamp_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetCreationTimestamp" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetCreationTimestamp" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetDeletionGracePeriodSeconds" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetDeletionTimestamp" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetFinalizers_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetFinalizers" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetFinalizers" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetGeneration_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetGeneration" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetGeneration" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetName_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetName" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetName" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetResourceVersion_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetResourceVersion" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetResourceVersion" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetSelfLink_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetSelfLink" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetSelfLink" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
-  #[global] ReplicaSet'ptr_SetUID_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetUID" (λ: "$r", MethodResolve (go.PointerType meta_v1.ObjectMeta) "SetUID" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionGracePeriodSeconds" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionTimestamp" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetFinalizers_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetFinalizers" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetGenerateName_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetGenerateName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGenerateName" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetGeneration_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGeneration" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetLabels_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetLabels" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetLabels" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetName_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetName" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetOwnerReferences_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetOwnerReferences" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetOwnerReferences" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetResourceVersion_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetResourceVersion" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_GetUID_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "GetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetUID" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetCreationTimestamp_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetCreationTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetCreationTimestamp" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionGracePeriodSeconds" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionTimestamp" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetFinalizers_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetFinalizers" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetGeneration_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetGeneration" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetName_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetName" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetResourceVersion_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetResourceVersion" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetSelfLink_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetSelfLink" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetSelfLink" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
+  #[global] ReplicaSet'ptr_SetUID_unfold :: MethodUnfold (go.PointerType (ReplicaSet)) "SetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetUID" (StructFieldRef ReplicaSet "ObjectMeta"%go "$r"));
 }.
 
 Module ReplicaSetList.
@@ -1579,8 +1839,8 @@ Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
 Record t :=
 mk {
   Type' : v1.ReplicaSetConditionType.t;
-  Status' : core_v1.ConditionStatus.t;
-  LastTransitionTime' : meta_v1.Time.t;
+  Status' : code.k8s_io.api.core.v1.v1.ConditionStatus.t;
+  LastTransitionTime' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time.t;
   Reason' : go_string;
   Message' : go_string;
 }.
@@ -1593,8 +1853,8 @@ End ReplicaSetCondition.
 
 Definition ReplicaSetCondition'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
   (go.FieldDecl "Type"%go ReplicaSetConditionType);
-  (go.FieldDecl "Status"%go core_v1.ConditionStatus);
-  (go.FieldDecl "LastTransitionTime"%go meta_v1.Time);
+  (go.FieldDecl "Status"%go code.k8s_io.api.core.v1.v1.ConditionStatus);
+  (go.FieldDecl "LastTransitionTime"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Time);
   (go.FieldDecl "Reason"%go go.string);
   (go.FieldDecl "Message"%go go.string)
 ].
@@ -1623,17 +1883,63 @@ Class ReplicaSetCondition_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!
 Module ControllerRevision.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  TypeMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta.t;
+  ObjectMeta' : code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta.t;
+  Data' : code.k8s_io.apimachinery.pkg.runtime.runtime.RawExtension.t;
+  Revision' : w64;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _) (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End ControllerRevision.
+
+Definition ControllerRevision'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.EmbeddedField "TypeMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.TypeMeta);
+  (go.EmbeddedField "ObjectMeta"%go code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta);
+  (go.FieldDecl "Data"%go code.k8s_io.apimachinery.pkg.runtime.runtime.RawExtension);
+  (go.FieldDecl "Revision"%go go.int64)
+].
+Program Definition ControllerRevision'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (ControllerRevision'fds_unsealed).
+Global Instance equals_unfold_ControllerRevision {ext : ffi_syntax} {go_gctx : GoGlobalContext} : ControllerRevision'fds =→ ControllerRevision'fds_unsealed.
+Proof. rewrite /ControllerRevision'fds seal_eq //. Qed.
+
+Definition ControllerRevisionⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (ControllerRevision'fds).
 
 Class ControllerRevision_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] ControllerRevision_type_repr  :: go.TypeReprUnderlying ControllerRevisionⁱᵐᵖˡ ControllerRevision.t;
   #[global] ControllerRevision_underlying :: (ControllerRevision) <u (ControllerRevisionⁱᵐᵖˡ);
-  #[global] ControllerRevisionⁱᵐᵖˡ_underlying :: (ControllerRevisionⁱᵐᵖˡ) ↓u (ControllerRevisionⁱᵐᵖˡ);
+  #[global] ControllerRevision_get_TypeMeta (x : ControllerRevision.t) :: ⟦StructFieldGet (ControllerRevisionⁱᵐᵖˡ) "TypeMeta", #x⟧ ⤳[under] #x.(ControllerRevision.TypeMeta');
+  #[global] ControllerRevision_set_TypeMeta (x : ControllerRevision.t) y :: ⟦StructFieldSet (ControllerRevisionⁱᵐᵖˡ) "TypeMeta", (#x, #y)⟧ ⤳[under] #(x <|ControllerRevision.TypeMeta' := y|>);
+  #[global] ControllerRevision_get_ObjectMeta (x : ControllerRevision.t) :: ⟦StructFieldGet (ControllerRevisionⁱᵐᵖˡ) "ObjectMeta", #x⟧ ⤳[under] #x.(ControllerRevision.ObjectMeta');
+  #[global] ControllerRevision_set_ObjectMeta (x : ControllerRevision.t) y :: ⟦StructFieldSet (ControllerRevisionⁱᵐᵖˡ) "ObjectMeta", (#x, #y)⟧ ⤳[under] #(x <|ControllerRevision.ObjectMeta' := y|>);
+  #[global] ControllerRevision_get_Data (x : ControllerRevision.t) :: ⟦StructFieldGet (ControllerRevisionⁱᵐᵖˡ) "Data", #x⟧ ⤳[under] #x.(ControllerRevision.Data');
+  #[global] ControllerRevision_set_Data (x : ControllerRevision.t) y :: ⟦StructFieldSet (ControllerRevisionⁱᵐᵖˡ) "Data", (#x, #y)⟧ ⤳[under] #(x <|ControllerRevision.Data' := y|>);
+  #[global] ControllerRevision_get_Revision (x : ControllerRevision.t) :: ⟦StructFieldGet (ControllerRevisionⁱᵐᵖˡ) "Revision", #x⟧ ⤳[under] #x.(ControllerRevision.Revision');
+  #[global] ControllerRevision_set_Revision (x : ControllerRevision.t) y :: ⟦StructFieldSet (ControllerRevisionⁱᵐᵖˡ) "Revision", (#x, #y)⟧ ⤳[under] #(x <|ControllerRevision.Revision' := y|>);
+  #[global] ControllerRevision'ptr_GetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionGracePeriodSeconds" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetDeletionTimestamp" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetFinalizers_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetFinalizers" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetGenerateName_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetGenerateName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGenerateName" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetGeneration_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetGeneration" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetLabels_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetLabels" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetLabels" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetName_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetName" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetOwnerReferences_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetOwnerReferences" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetOwnerReferences" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetResourceVersion_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetResourceVersion" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_GetUID_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "GetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "GetUID" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetCreationTimestamp_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetCreationTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetCreationTimestamp" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetDeletionGracePeriodSeconds_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetDeletionGracePeriodSeconds" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionGracePeriodSeconds" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetDeletionTimestamp_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetDeletionTimestamp" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetDeletionTimestamp" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetFinalizers_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetFinalizers" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetFinalizers" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetGeneration_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetGeneration" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetGeneration" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetName_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetName" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetName" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetResourceVersion_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetResourceVersion" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetResourceVersion" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetSelfLink_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetSelfLink" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetSelfLink" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
+  #[global] ControllerRevision'ptr_SetUID_unfold :: MethodUnfold (go.PointerType (ControllerRevision)) "SetUID" (λ: "$r", MethodResolve (go.PointerType code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.ObjectMeta) "SetUID" (StructFieldRef ControllerRevision "ObjectMeta"%go "$r"));
 }.
 
 Module ControllerRevisionList.
@@ -1693,9 +1999,10 @@ Class Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!G
   #[global] ReplicaSetCondition_instance :: ReplicaSetCondition_Assumptions;
   #[global] ControllerRevision_instance :: ControllerRevision_Assumptions;
   #[global] ControllerRevisionList_instance :: ControllerRevisionList_Assumptions;
-  #[global] import_core_v1_Assumption :: core_v1.Assumptions;
-  #[global] import_meta_v1_Assumption :: meta_v1.Assumptions;
-  #[global] import_intstr_Assumption :: intstr.Assumptions;
-  #[global] import_schema_Assumption :: schema.Assumptions;
+  #[global] import_core_v1_Assumption :: code.k8s_io.api.core.v1.v1.Assumptions;
+  #[global] import_meta_v1_Assumption :: code.k8s_io.apimachinery.pkg.apis.meta.v1.v1.Assumptions;
+  #[global] import_intstr_Assumption :: code.k8s_io.apimachinery.pkg.util.intstr.intstr.Assumptions;
+  #[global] import_runtime_Assumption :: code.k8s_io.apimachinery.pkg.runtime.runtime.Assumptions;
+  #[global] import_schema_Assumption :: code.k8s_io.apimachinery.pkg.runtime.schema.schema.Assumptions;
 }.
 End v1.

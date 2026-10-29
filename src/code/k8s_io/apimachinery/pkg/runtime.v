@@ -465,8 +465,6 @@ Axiom bufferⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go
 
 Axiom TypeMetaⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
-Axiom RawExtensionⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
-
 Axiom Unknownⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
 
 Axiom ProtobufMarshallerⁱᵐᵖˡ : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, go.type.
@@ -781,8 +779,8 @@ Axiom _'init : ∀ {ext : ffi_syntax} {go_gctx : GoGlobalContext}, val.
 Definition initialize' {ext : ffi_syntax} {go_gctx : GoGlobalContext} : val :=
   λ: <>,
     package.init pkg_id.runtime (λ: <>,
-      exception_do (do:  (schema.initialize' #());;;
-      do:  (url.initialize' #());;;
+      exception_do (do:  (code.k8s_io.apimachinery.pkg.runtime.schema.schema.initialize' #());;;
+      do:  (code.net.url.url.initialize' #());;;
       do:  (AllocatorPool'init #());;;
       do:  (_'init #());;;
       do:  (_'init #());;;
@@ -1431,7 +1429,7 @@ Definition t : Type := interface.t.
 End def.
 End ParameterCodec.
 
-Definition ParameterCodecⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.InterfaceType [go.MethodElem "DecodeParameters"%go (go.Signature [url.Values; schema.GroupVersion; Object] false [go.error]); go.MethodElem "EncodeParameters"%go (go.Signature [Object; schema.GroupVersion] false [url.Values; go.error])].
+Definition ParameterCodecⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.InterfaceType [go.MethodElem "DecodeParameters"%go (go.Signature [code.net.url.url.Values; code.k8s_io.apimachinery.pkg.runtime.schema.schema.GroupVersion; Object] false [go.error]); go.MethodElem "EncodeParameters"%go (go.Signature [Object; code.k8s_io.apimachinery.pkg.runtime.schema.schema.GroupVersion] false [code.net.url.url.Values; go.error])].
 
 Class ParameterCodec_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
@@ -1718,7 +1716,7 @@ Definition t : Type := interface.t.
 End def.
 End Object.
 
-Definition Objectⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.InterfaceType [go.MethodElem "DeepCopyObject"%go (go.Signature [] false [Object]); go.MethodElem "GetObjectKind"%go (go.Signature [] false [schema.ObjectKind])].
+Definition Objectⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.InterfaceType [go.MethodElem "DeepCopyObject"%go (go.Signature [] false [Object]); go.MethodElem "GetObjectKind"%go (go.Signature [] false [code.k8s_io.apimachinery.pkg.runtime.schema.schema.ObjectKind])].
 
 Class Object_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
@@ -2000,17 +1998,36 @@ Class TypeMeta_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalCont
 Module RawExtension.
 Section def.
 Context {ext : ffi_syntax} {go_gctx : GoGlobalContext}.
-Axiom t : Type.
-Axiom zero_val : ZeroVal t.
-#[global] Existing Instance zero_val.
+Record t :=
+mk {
+  Raw' : slice.t;
+  Object' : runtime.Object.t;
+}.
+
+#[global] Instance zero_val : ZeroVal t := {| zero_val := mk (zero_val _) (zero_val _)|}.
+#[global] Arguments mk : clear implicits.
+#[global] Arguments t : clear implicits.
 End def.
 End RawExtension.
+
+Definition RawExtension'fds_unsealed {ext : ffi_syntax} {go_gctx : GoGlobalContext} : list go.field_decl := [
+  (go.FieldDecl "Raw"%go (go.SliceType go.byte));
+  (go.FieldDecl "Object"%go Object)
+].
+Program Definition RawExtension'fds {ext : ffi_syntax} {go_gctx : GoGlobalContext} := sealed (RawExtension'fds_unsealed).
+Global Instance equals_unfold_RawExtension {ext : ffi_syntax} {go_gctx : GoGlobalContext} : RawExtension'fds =→ RawExtension'fds_unsealed.
+Proof. rewrite /RawExtension'fds seal_eq //. Qed.
+
+Definition RawExtensionⁱᵐᵖˡ {ext : ffi_syntax} {go_gctx : GoGlobalContext} : go.type := go.StructType (RawExtension'fds).
 
 Class RawExtension_Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!GoSemanticsFunctions} : Prop :=
 {
   #[global] RawExtension_type_repr  :: go.TypeReprUnderlying RawExtensionⁱᵐᵖˡ RawExtension.t;
   #[global] RawExtension_underlying :: (RawExtension) <u (RawExtensionⁱᵐᵖˡ);
-  #[global] RawExtensionⁱᵐᵖˡ_underlying :: (RawExtensionⁱᵐᵖˡ) ↓u (RawExtensionⁱᵐᵖˡ);
+  #[global] RawExtension_get_Raw (x : RawExtension.t) :: ⟦StructFieldGet (RawExtensionⁱᵐᵖˡ) "Raw", #x⟧ ⤳[under] #x.(RawExtension.Raw');
+  #[global] RawExtension_set_Raw (x : RawExtension.t) y :: ⟦StructFieldSet (RawExtensionⁱᵐᵖˡ) "Raw", (#x, #y)⟧ ⤳[under] #(x <|RawExtension.Raw' := y|>);
+  #[global] RawExtension_get_Object (x : RawExtension.t) :: ⟦StructFieldGet (RawExtensionⁱᵐᵖˡ) "Object", #x⟧ ⤳[under] #x.(RawExtension.Object');
+  #[global] RawExtension_set_Object (x : RawExtension.t) y :: ⟦StructFieldSet (RawExtensionⁱᵐᵖˡ) "Object", (#x, #y)⟧ ⤳[under] #(x <|RawExtension.Object' := y|>);
 }.
 
 Module Unknown.
@@ -2141,7 +2158,7 @@ Class Assumptions {ext : ffi_syntax} `{!GoGlobalContext} `{!GoLocalContext} `{!G
   #[global] Unknown_instance :: Unknown_Assumptions;
   #[global] ProtobufMarshaller_instance :: ProtobufMarshaller_Assumptions;
   #[global] ProtobufReverseMarshaller_instance :: ProtobufReverseMarshaller_Assumptions;
-  #[global] import_url_Assumption :: url.Assumptions;
-  #[global] import_schema_Assumption :: schema.Assumptions;
+  #[global] import_url_Assumption :: code.net.url.url.Assumptions;
+  #[global] import_schema_Assumption :: code.k8s_io.apimachinery.pkg.runtime.schema.schema.Assumptions;
 }.
 End runtime.

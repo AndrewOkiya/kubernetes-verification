@@ -1,14 +1,140 @@
-From New.proof Require Import prelude empty_ffi.
+From New.proof Require Import prelude empty_ffi wp_keep.
 From New.proof.kubernetes_model Require Export apimodel_init.
+From New.proof.math Require Import rand.
+From New.proof.k8s_io.apimachinery.pkg.util Require Import uuid.
 From New.proof.k8s_io.apimachinery.pkg.api Require Export errors.
 From New.proof.k8s_io.apimachinery.pkg.apis.meta Require Import v1.
-From New.proof.kubernetes_types Require Export prelude.
+From New.object_specs Require Export prelude.
 From New.proof.kubernetes_model Require Export inv.
 
 Section proof.
 Context `{hG: !heapGS Σ} `{!ffi_semantics _ _}.
 Context {sem : go.Semantics} {package_sem : apimodel.Assumptions}.
 Local Set Default Proof Using "All".
+
+Definition storage_object_normalize (obj : KObjectV.t) : KObjectV.t :=
+  KObjectV.update_objectmeta obj
+    ((KObjectV.objectmeta obj)
+       <| ObjectMetaV.ResourceVersion' := ""%go |>
+       <| ObjectMetaV.SelfLink' := ""%go |>).
+
+(** [create_prepared_for_helper] describes the private object copy passed to
+    [applyValidationAndDefaulting]. [State.create] is below request decoding, so
+    it preserves TypeMeta. It wipes system metadata, fills the request
+    namespace, generates a creation timestamp and UID, and generates a name
+    when the request omits one. *)
+Definition create_prepared_for_helper
+    (namespace name : go_string) (input helper_input : KObjectV.t) : Prop :=
+  let input_meta := KObjectV.objectmeta input in
+  let helper_meta := KObjectV.objectmeta helper_input in
+  name = helper_meta.(ObjectMetaV.Name') ∧
+  name ≠ ""%go ∧
+  valid_name (KObjectV.kind input) name ∧
+  valid_uid helper_meta.(ObjectMetaV.UID') ∧
+  (if decide (input_meta.(ObjectMetaV.Name') = ""%go)
+   then input_meta.(ObjectMetaV.GenerateName') ≠ ""%go
+   else name = input_meta.(ObjectMetaV.Name')) ∧
+  helper_input =
+    KObjectV.update_objectmeta input
+      (input_meta <| ObjectMetaV.Name' := name |>
+                  <| ObjectMetaV.Namespace' := namespace |>
+                  <| ObjectMetaV.SelfLink' := ""%go |>
+                  <| ObjectMetaV.UID' := helper_meta.(ObjectMetaV.UID') |>
+                  <| ObjectMetaV.CreationTimestamp' := helper_meta.(ObjectMetaV.CreationTimestamp') |>
+                  <| ObjectMetaV.DeletionTimestamp' := None |>
+                  <| ObjectMetaV.DeletionGracePeriodSeconds' := None |>).
+
+Definition valid_without_resource_version (obj : KObjectV.t) : Prop :=
+  ObjectMetaV.valid (KObjectV.kind obj) (KObjectV.objectmeta obj) ∧
+  ∀ rv, valid_resource_version rv →
+    KObjectV.valid (KObjectV.update_objectmeta obj
+      (KObjectV.objectmeta obj <| ObjectMetaV.ResourceVersion' := rv |>)).
+
+(** [update_objects_equiv_except_resource_version] relates two views of the
+    same object when only the server-managed resource version may differ.
+    Storage establishes this relation between the helper result and the stored
+    object. *)
+Definition update_objects_equiv_except_resource_version (obj1 obj2 : KObjectV.t) : Prop :=
+  KObjectV.same_kind obj1 obj2 ∧
+  KObjectV.typemeta obj1 = KObjectV.typemeta obj2 ∧
+  ObjectMetaV.equiv_except_resource_version (KObjectV.objectmeta obj1) (KObjectV.objectmeta obj2) ∧
+  KObjectV.spec obj1 = KObjectV.spec obj2 ∧
+  KObjectV.status obj1 = KObjectV.status obj2.
+
+(** [update_prepared_for_helper] describes the object that the update caller
+    passes to an update or status-update validation/defaulting helper. [input]
+    is the object submitted to the request. The caller fills an empty namespace
+    with [namespace]. It fills an omitted resource version from [old], while a
+    nonempty submitted resource version must already equal the old one. Schema
+    defaulting and the remaining normalization happen inside the helper, not in
+    this preparation relation. *)
+Definition update_prepared_for_helper
+    (namespace : go_string) (old input helper_input : KObjectV.t) : Prop :=
+  ((KObjectV.objectmeta input).(ObjectMetaV.Namespace') = ""%go ∨
+   (KObjectV.objectmeta input).(ObjectMetaV.Namespace') = namespace) ∧
+  ((KObjectV.objectmeta input).(ObjectMetaV.ResourceVersion') = ""%go ∨
+   (KObjectV.objectmeta input).(ObjectMetaV.ResourceVersion') =
+     (KObjectV.objectmeta old).(ObjectMetaV.ResourceVersion')) ∧
+  KObjectV.key old = KObjectV.key helper_input ∧
+  helper_input =
+    KObjectV.update_objectmeta input
+      ((KObjectV.objectmeta input) <| ObjectMetaV.Namespace' := namespace |>
+                                   <| ObjectMetaV.ResourceVersion' :=
+                                        (KObjectV.objectmeta old).(ObjectMetaV.ResourceVersion') |>).
+
+(** This is the single trusted semantic contract for a successful ordinary
+    update-helper call. [old] and [helper_input] are the objects passed to the
+    helper, and [helper_result] is the mutated input object after it returns.
+
+    The first two conjuncts expose facts needed by callers that separately own
+    status or rely on an unchanged spec. The remaining conjuncts connect the
+    helper result to the public end-to-end update relation and invariants. *)
+Definition applyValidationAndDefaultingOnUpdate_updated
+    (namespace : go_string) (old helper_input helper_result : KObjectV.t) : Prop :=
+  KObjectV.status helper_result = KObjectV.status old ∧
+  (KObjectV.spec helper_input = KObjectV.spec old →
+    KObjectV.spec helper_result = KObjectV.spec old) ∧
+  (∀ input stored,
+    update_prepared_for_helper namespace old input helper_input →
+    update_objects_equiv_except_resource_version helper_result stored →
+    KObjectV.updated (KObjectV.spec old) input stored) ∧
+  (KObjectV.valid old →
+    valid_typemeta (KObjectV.kind helper_input) (KObjectV.typemeta helper_input) →
+    KObjectV.valid helper_result) ∧
+  (KObjectV.extra_valid old → KObjectV.extra_valid helper_result).
+
+(** This is the single trusted semantic contract for a successful status-update
+    helper call. [old] and [helper_input] are the objects passed to the helper,
+    and [helper_result] is the mutated input object after it returns. *)
+Definition applyValidationAndDefaultingOnStatusUpdate_updated
+    (namespace : go_string) (old helper_input helper_result : KObjectV.t) : Prop :=
+  (∀ request_kind input stored,
+    KObjectV.valid old →
+    KObjectV.valid_status_update request_kind namespace
+      (KObjectV.objectmeta old) (KObjectV.status old) input →
+    update_prepared_for_helper namespace old input helper_input →
+    update_objects_equiv_except_resource_version helper_result stored →
+    KObjectV.status_updated input stored ∧
+    KObjectV.spec stored = KObjectV.spec old) ∧
+  (KObjectV.valid old →
+    valid_typemeta (KObjectV.kind helper_input) (KObjectV.typemeta helper_input) →
+    KObjectV.valid helper_result).
+
+Definition delete_tx_preconditions_with_rv (options : DeleteOptionsV.t) (rv : go_string) :
+    PreconditionsV.t :=
+  match options.(DeleteOptionsV.Preconditions') with
+  | None => {|
+      PreconditionsV.UID' := None;
+      PreconditionsV.ResourceVersion' := Some rv;
+    |}
+  | Some preconditions =>
+      preconditions <| PreconditionsV.ResourceVersion' := Some rv |>
+  end.
+
+Definition delete_tx_options_with_rv (options : DeleteOptionsV.t) (rv : go_string) :
+    DeleteOptionsV.t :=
+  options <| DeleteOptionsV.Preconditions' :=
+    Some (delete_tx_preconditions_with_rv options rv) |>.
 
 #[global] Instance KKey_into_val_inj : go.IntoValInj KKey.t.
 Proof.
@@ -76,32 +202,14 @@ Qed.
 #[global] Instance KKey_safe_map_key key :
   SafeMapKey (K:=KKey.t) apimodel.KKey key.
 Proof.
-  constructor. iIntros (stk E Ψ) "HΨ". wp_auto.
+  constructor. iIntros (stk E Ψ) "HΨ". wp_auto_keep.
   replace (bool_decide (apimodel.KKey.Kind' key = apimodel.KKey.Kind' key)) with true by
     (symmetry; apply bool_decide_eq_true_2; done).
-  wp_auto.
+  wp_auto_keep.
   replace (bool_decide (apimodel.KKey.Name' key = apimodel.KKey.Name' key)) with true by
     (symmetry; apply bool_decide_eq_true_2; done).
-  wp_auto. done.
+  wp_auto_keep. done.
 Qed.
-
-Lemma wp_deepCopy i obj:
-  {{{ is_pkg_init apimodel ∗
-      KObjectV.deepown_i i obj 1
-  }}}
-    @! apimodel.deepCopy #(interface.ok i)
-  {{{ i', RET #(interface.ok i');
-      KObjectV.deepown_i i' obj 1 ∗
-      KObjectV.deepown_i i obj 1
-  }}}.
-Proof.
-Admitted.
-
-Definition storage_object_normalize (obj : KObjectV.t) : KObjectV.t :=
-  KObjectV.update_objectmeta obj
-    ((KObjectV.objectmeta obj)
-       <| ObjectMetaV.ResourceVersion' := ""%go |>
-       <| ObjectMetaV.SelfLink' := ""%go |>).
 
 Lemma objectmeta_update_objectmeta obj m :
   KObjectV.objectmeta (KObjectV.update_objectmeta obj m) = m.
@@ -113,7 +221,7 @@ Lemma storage_object_normalize_update_objectmeta_deletionTimestamp obj m :
   m.(ObjectMetaV.DeletionTimestamp') =
   (KObjectV.objectmeta obj).(ObjectMetaV.DeletionTimestamp').
 Proof.
-  destruct obj as [p|rs|pvc|sts].
+  destruct obj as [p|rs|pvc|sts|d|revision].
   - destruct p as [pt pm ps pst]. destruct pm. destruct m. simpl.
     intros H. inversion H. done.
   - destruct rs as [rt rm rspec rstatus]. destruct rm. destruct m. simpl.
@@ -121,6 +229,10 @@ Proof.
   - destruct pvc as [pvct pvcm pvcs pvcst]. destruct pvcm. destruct m. simpl.
     intros H. inversion H. done.
   - destruct sts as [stst stsm stss stsst]. destruct stsm. destruct m. simpl.
+    intros H. inversion H. done.
+  - destruct d as [dt dm ds dst]. destruct dm. destruct m. simpl.
+    intros H. inversion H. done.
+  - destruct revision as [rt rm rd rn]. destruct rm. destruct m. simpl.
     intros H. inversion H. done.
 Qed.
 
@@ -170,30 +282,10 @@ Proof.
   exact Hspec_eq.
 Qed.
 
-Lemma wp_storageObjectDeepEqual i1 i2 obj1 obj2 dq1 dq2 :
-  {{{ is_pkg_init apimodel ∗
-      KObjectV.deepown_i i1 obj1 dq1 ∗
-      KObjectV.deepown_i i2 obj2 dq2
-  }}}
-    @! apimodel.storageObjectDeepEqual #(interface.ok i1) #(interface.ok i2)
-  {{{ v, RET #v;
-      KObjectV.deepown_i i1 obj1 dq1 ∗
-      KObjectV.deepown_i i2 obj2 dq2 ∗
-      ⌜ v = true ↔ storage_object_normalize obj1 = storage_object_normalize obj2 ⌝
-  }}}.
-Proof.
-Admitted.
+Local Transparent valid_resource_version.
 
-Lemma wp_deletionTimestampForDelete (graceful: bool) (gracePeriod: w64) :
-  {{{ is_pkg_init apimodel }}}
-    @! apimodel.deletionTimestampForDelete #graceful #gracePeriod
-  {{{ l c v, RET #l;
-      l ↦ c ∗
-      TimeV.deepown c v 1
-  }}}.
-Proof.
-Admitted.
-
+(** Collision retries preserve the original map. Only the successful iteration
+    inserts a key, so no probabilistic freshness assumption is needed. *)
 Lemma wp_State__generateNewRVAndUpdate l used_rv_l (used_rv : gmap go_string unit) :
   {{{ is_pkg_init apimodel ∗
       l.[(apimodel.State.t), "usedRV"] ↦ used_rv_l ∗
@@ -207,61 +299,70 @@ Lemma wp_State__generateNewRVAndUpdate l used_rv_l (used_rv : gmap go_string uni
       used_rv_l ↦$ <[rv:=()]> used_rv
   }}}.
 Proof.
-Admitted.
+  iIntros (Φ) "(#Hinit & Hfield & Hmap) HΦ".
+  wp_method_call. rewrite /apimodel.State__generateNewRVAndUpdateⁱᵐᵖˡ. wp_call.
+  iAssert (is_pkg_init rand) as "#Hrand".
+  { iPkgInit. }
+  iAssert (is_pkg_init strconv) as "#Hstrconv".
+  { iPkgInit. }
+  wp_auto_keep.
+  set I := ("Hfield" ∷ l.[(apimodel.State.t), "usedRV"] ↦ used_rv_l ∗
+    "Hmap" ∷ used_rv_l ↦$ used_rv)%I.
+  iAssert I with "[$Hfield $Hmap]" as "Hloop".
+  wp_for "Hloop".
+  wp_apply (wp_Int63 with "Hrand"). iIntros (n) "%Hnonneg". wp_auto_keep.
+  wp_apply (wp_FormatInt_decimal n with "[$Hstrconv //]").
+  wp_apply (wp_map_lookup2 with "Hmap"). iIntros "Hmap". wp_auto_keep.
+  destruct (used_rv !! decimal_string (Z.to_nat (sint.Z n))) as [u|] eqn:Hlookup.
+  - wp_auto_keep. iApply wp_for_post_do. wp_auto_keep.
+    iFrame.
+  - wp_auto_keep.
+    wp_apply (wp_map_insert with "Hmap"). iIntros "Hmap". wp_auto_keep.
+    iApply wp_for_post_return.
+    rewrite return_val_unseal /return_val_def.
+    rewrite exception_do_unseal /exception_do_def. wp_auto_keep.
+    iApply "HΦ". iFrame. iPureIntro. split; first exact Hlookup.
+    unfold valid_resource_version, uint64_decimal.
+    exists (Z.to_nat (sint.Z n)). split.
+    + apply parse_decimal_string_decimal_string.
+    + rewrite (Z2Nat.id (sint.Z n) Hnonneg). word.
+Qed.
 
-Lemma wp_validateObjectMeta i (kind : go_string) l o m dq :
+Local Opaque valid_resource_version.
+
+Lemma wp_State__generateNewUIDAndUpdate l used_uid_l (used_uid : gmap types.UID.t unit) :
   {{{ is_pkg_init apimodel ∗
-      ⌜ KObjectV.valid_interface i l o ⌝ ∗
-      ObjectMetaV.deepown_l (KObjectV.objectmeta_ptr l o) m dq ∗
-      ⌜ ObjectMetaV.valid kind m ⌝
+      l.[(apimodel.State.t), "usedUID"] ↦ used_uid_l ∗
+      used_uid_l ↦$ used_uid
   }}}
-    @! apimodel.validateObjectMeta #(interface.ok i) #kind
-  {{{ RET #interface.nil;
-      ObjectMetaV.deepown_l (KObjectV.objectmeta_ptr l o) m dq
+    l @! (go.PointerType apimodel.State) @! "generateNewUIDAndUpdate" #()
+  {{{ uid, RET #uid;
+      ⌜ used_uid !! uid = None ⌝ ∗
+      ⌜ valid_uid uid ⌝ ∗
+      l.[(apimodel.State.t), "usedUID"] ↦ used_uid_l ∗
+      used_uid_l ↦$ <[uid:=()]> used_uid
   }}}.
 Proof.
-Admitted.
-
-Lemma wp_parseResourceVersion rv :
-  {{{ is_pkg_init apimodel ∗
-      ⌜ valid_resource_version rv ⌝
-  }}}
-    @! apimodel.parseResourceVersion #rv
-  {{{ (ret : w64), RET (#ret, #interface.nil);
-    True
-  }}}.
-Proof. Admitted.
-
-Lemma wp_newUpdateResourceVersionConflictError (kind name old_rv new_rv : go_string) :
-  {{{ is_pkg_init apimodel }}}
-    @! apimodel.newUpdateResourceVersionConflictError #kind #name #old_rv #new_rv
-  {{{ err, RET #err;
-      ⌜ conflict_error err ⌝
-  }}}.
-Proof. Admitted.
-
-Lemma wp_newUpdateUIDConflictError (kind name existing_uid uid : go_string) :
-  {{{ is_pkg_init apimodel }}}
-    @! apimodel.newUpdateUIDConflictError #kind #name #existing_uid #uid
-  {{{ err, RET #err;
-      ⌜ conflict_error err ⌝
-  }}}.
-Proof. Admitted.
-
-Lemma wp_newPreconditionUIDConflictError (kind name uid1 uid2: go_string) :
-  {{{ is_pkg_init apimodel }}}
-    @! apimodel.newPreconditionUIDConflictError #kind #name #uid1 #uid2
-  {{{ err, RET #err;
-      ⌜ conflict_error err ⌝
-  }}}.
-Proof. Admitted.
-
-Lemma wp_newPreconditionRVConflictError (kind name rv1 rv2: go_string) :
-  {{{ is_pkg_init apimodel }}}
-    @! apimodel.newPreconditionRVConflictError #kind #name #rv1 #rv2
-  {{{ err, RET #err;
-      ⌜ conflict_error err ⌝
-  }}}.
-Proof. Admitted.
+  iIntros (Φ) "(#Hinit & Hfield & Hmap) HΦ".
+  wp_method_call. rewrite /apimodel.State__generateNewUIDAndUpdateⁱᵐᵖˡ. wp_call.
+  iAssert (is_pkg_init uuid) as "#Huuid".
+  { iPkgInit. }
+  wp_auto_keep.
+  set I := ("Hfield" ∷ l.[(apimodel.State.t), "usedUID"] ↦ used_uid_l ∗
+    "Hmap" ∷ used_uid_l ↦$ used_uid)%I.
+  iAssert I with "[$Hfield $Hmap]" as "Hloop".
+  wp_for "Hloop".
+  wp_apply (wp_NewUUID with "Huuid"). iIntros (uid) "%Hvalid". wp_auto_keep.
+  wp_apply (wp_map_lookup2 with "Hmap"). iIntros "Hmap". wp_auto_keep.
+  destruct (used_uid !! uid) as [u|] eqn:Hlookup.
+  - wp_auto_keep. iApply wp_for_post_do. wp_auto_keep.
+    iFrame.
+  - wp_auto_keep.
+    wp_apply (wp_map_insert with "Hmap"). iIntros "Hmap". wp_auto_keep.
+    iApply wp_for_post_return.
+    rewrite return_val_unseal /return_val_def.
+    rewrite exception_do_unseal /exception_do_def. wp_auto_keep.
+    iApply "HΦ". iFrame. done.
+Qed.
 
 End proof.

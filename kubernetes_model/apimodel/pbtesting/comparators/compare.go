@@ -10,6 +10,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -317,7 +318,19 @@ func deepCopyAndClear(obj interface{}) interface{} {
 		copy := o.DeepCopy()
 		clearServerAssignedFields(copy)
 		return copy
+	case *appsv1.ControllerRevision:
+		copy := o.DeepCopy()
+		clearServerAssignedFields(copy)
+		return copy
 	case *appsv1.Deployment:
+		copy := o.DeepCopy()
+		clearServerAssignedFields(copy)
+		return copy
+	case *corev1.ServiceAccount:
+		copy := o.DeepCopy()
+		clearServerAssignedFields(copy)
+		return copy
+	case *rbacv1.ClusterRole:
 		copy := o.DeepCopy()
 		clearServerAssignedFields(copy)
 		return copy

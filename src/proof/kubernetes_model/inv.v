@@ -3,7 +3,7 @@ From New.proof.kubernetes_model Require Export apimodel_init.
 From New.proof.k8s_io.apimachinery.pkg.api Require Export meta.
 From New.proof.k8s_io.apimachinery.pkg.apis.meta Require Export v1.
 From New.proof Require Import prelude empty_ffi.
-From New.proof.kubernetes_types Require Export prelude.
+From New.object_specs Require Export prelude.
 From New.proof.big_op Require Export big_sepL big_sepM.
 From New.proof.algebra Require Export
   kview cview terminating_children deletion_observation.
@@ -64,8 +64,8 @@ Definition own_children_frag γ key uid dq keys : iProp Σ :=
 Definition own_terminating_children_auth γ state : iProp Σ :=
   terminating_children.own_auth γ.(γ_terminating_children) state.
 
-Definition own_terminating_children_frag γ key uid has_terminating_children_value : iProp Σ :=
-  terminating_children.own_frag γ.(γ_terminating_children) key uid has_terminating_children_value.
+Definition own_terminating_children_frag γ key uid terminating_bound : iProp Σ :=
+  terminating_children.own_frag γ.(γ_terminating_children) key uid terminating_bound.
 
 Definition own_deletion_observation_auth γ state used_uid : iProp Σ :=
   deletion_observation.own_auth γ.(γ_deletion_observation) state used_uid.

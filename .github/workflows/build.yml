@@ -7,11 +7,27 @@ on:
   pull_request:
 
 jobs:
+  proof-groups-coverage:
+    name: Check proof group coverage
+    runs-on: ubuntu-latest
+    outputs:
+      groups: ${{ steps.groups.outputs.groups }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check coverage and list proof groups
+        id: groups
+        run: |
+          groups="$(make --silent proof-groups)"
+          echo "groups=$groups" >> "$GITHUB_OUTPUT"
+
   build:
+    name: Rocq (${{ matrix.proof-group }})
+    needs: proof-groups-coverage
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rocq-version: ["9.1.0"]
+        proof-group: ${{ fromJSON(needs.proof-groups-coverage.outputs.groups) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v7
@@ -29,12 +45,9 @@ jobs:
         run: |
           opam pin add --no-action -k path .
           opam install --deps-only .
-      - name: Rocq build
-        run: make -j2
-      - name: opam install
-        run: opam install --assume-built .
-      - name: opam uninstall
-        run: opam uninstall .
+      - name: Check ${{ matrix.proof-group }} proofs using vos dependencies
+        # Include maximum RSS so future memory regressions are visible in logs.
+        run: /usr/bin/time -v make -j2 vok-${{ matrix.proof-group }}
 
   check-goose:
     runs-on: ubuntu-latest
@@ -49,11 +62,11 @@ jobs:
         run: |
           ./scripts/goose.sh
 
-          changes="$(git status --short --untracked-files=all -- src/code src/generatedproof)"
+          changes="$(git status --short --untracked-files=all -- src/code src/generatedproof src/generatedviews)"
           if [[ -n "$changes" ]]; then
             echo "Goose generated changes; run ./scripts/goose.sh and commit the results:"
             printf '%s\n' "$changes"
-            git diff -- src/code src/generatedproof
+            git diff -- src/code src/generatedproof src/generatedviews
             exit 1
           fi
 
