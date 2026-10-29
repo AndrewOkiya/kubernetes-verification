@@ -140,7 +140,7 @@ Context `{!KObjectV.ObjectInterfaceAssumptions}.
 Lemma wp_reconcileDesiredPods_preservation γ model_l set_l pods_sl
     (set : StatefulSetV.t) (ptrs : list loc)
     (pods reserved : list PodV.t)
-    (pvcs : list PersistentVolumeClaimV.t) dq_set dq_pods :
+    (pvcs : list PersistentVolumeClaimV.t) dq_set dq_pods pvc_orphans :
   {{{ "#Hpkg" ∷
         is_pkg_init code.controllers.statefulset.pkg_id.statefulset ∗
       "#Hisk" ∷ is_kubernetes γ model_l ∗
@@ -165,6 +165,9 @@ Lemma wp_reconcileDesiredPods_preservation γ model_l set_l pods_sl
         own_available_reserved_frag γ 1 key ∨ ∃ uid, own_deleting_reserved_frag γ 1 key uid) ∗
       "Hreserved_pvcs" ∷ ([∗ list] key ∈ missing_pvc_keys set pvcs,
         own_available_reserved_frag γ 1 key) ∗
+      "Hown_pvc_orphans" ∷ own_orphans_frag γ
+        (PersistentVolumeClaimV.kind, set.(StatefulSetV.ObjectMeta').(ObjectMetaV.Namespace'))
+        (DfracOwn 1) pvc_orphans ∗
       "%Hset_valid" ∷ ⌜ StatefulSetV.valid set ⌝ ∗
       "%Hpods_valid" ∷ ⌜ Forall PodV.valid pods ⌝ ∗
       "%Hpods_members" ∷ ⌜ Forall
@@ -192,6 +195,9 @@ Lemma wp_reconcileDesiredPods_preservation γ model_l set_l pods_sl
         own_available_reserved_frag γ 1 key ∨ ∃ uid, own_deleting_reserved_frag γ 1 key uid) ∗
       "Hreserved_pvcs" ∷ ([∗ list] key ∈ missing_pvc_keys set (pvc_list_of_map pvc_map'),
         own_available_reserved_frag γ 1 key) ∗
+      "Hown_pvc_orphans" ∷ (∃ pvc_orphans', own_orphans_frag γ
+        (PersistentVolumeClaimV.kind, set.(StatefulSetV.ObjectMeta').(ObjectMetaV.Namespace'))
+        (DfracOwn 1) pvc_orphans') ∗
       "%Hpvc_wf" ∷ ⌜ ∀ key claim,
         pvc_map' !! key = Some claim →
         PersistentVolumeClaimV.key claim = key ⌝ ∗
@@ -283,6 +289,9 @@ Proof.
       own_available_reserved_frag γ 1 key ∨ ∃ uid, own_deleting_reserved_frag γ 1 key uid) ∗
     "Hreserved_pvcs" ∷ ([∗ list] key ∈ reserved_pvcs,
       own_available_reserved_frag γ 1 key) ∗
+    "Hown_pvc_orphans" ∷ (∃ pvc_orphans, own_orphans_frag γ
+      (PersistentVolumeClaimV.kind, set.(StatefulSetV.ObjectMeta').(ObjectMetaV.Namespace'))
+      (DfracOwn 1) pvc_orphans) ∗
     "%Hordinal_range" ∷ ⌜ 0 ≤ sint.Z ordinal ∧
       sint.Z ordinal ≤ Z.of_nat (statefulset_replicas set) ⌝ ∗
     "%Hpvc_wf" ∷ ⌜ ∀ key claim, pvc_map !! key = Some claim →
@@ -304,7 +313,7 @@ Proof.
       (pvc_list_of_map pvc_map) ≤
       match_distance set pods pvcs ⌝)%I.
   iAssert I with "[Hset Hpods_sl Hpods Hown_pods Hown_pvcs
-      Hown_children Hreserved_pods Hreserved_pvcs ordinal end set pods]"
+      Hown_children Hreserved_pods Hreserved_pvcs Hown_pvc_orphans ordinal end set pods]"
     as "Hloop".
   { iExists (W64 0), pods, initial_pvc_map,
       (missing_pvc_keys set pvcs).
@@ -475,9 +484,10 @@ Proof.
         ltac:(intros; by eapply desired_pvc_key_name_inj)
         Hclaim_valid_lookup with "Hown_pvcs Hreserved_pvcs")
         as "[Hpvc_states Hpvc_finish]".
+      iDestruct "Hown_pvc_orphans" as (pvc_orphans_cur) "Hown_pvc_orphans".
       wp_apply (wp_createPersistentVolumeClaims γ model_l set_l pod_l
         set local_pod (sint.nat ordinal) dq_set dq_pods
-        with "[$Hset $Hlocal_pod $Hpvc_states]").
+        with "[$Hset $Hlocal_pod $Hpvc_states $Hown_pvc_orphans]").
       { iFrame "#". iPureIntro.
         destruct Hset_meta_valid as
           (_ & _ & _ & Hnamespace_nonempty & Hnamespace_valid & _).
@@ -486,7 +496,7 @@ Proof.
         rewrite Forall_forall in Hpods_valid. apply Hpods_valid.
         apply list_elem_of_In.
         by apply list_elem_of_lookup_2 in Hlocal_lookup. }
-      iIntros "(Hset & Hlocal_pod & Hpvc_states)".
+      iIntros "(Hset & Hlocal_pod & Hpvc_states & Hown_pvc_orphans)".
       iEval (rewrite /pvc_done) in "Hpvc_states".
       iEval (rewrite persistent_volume_claim_templates_by_name_dom
         /pvc_claim_template_names) in "Hpvc_finish".
@@ -762,17 +772,18 @@ Proof.
         Hclaim_valid_lookup with "Hown_pvcs Hreserved_pvcs")
         as "[Hpvc_states Hpvc_finish]".
       wp_auto_keep.
+      iDestruct "Hown_pvc_orphans" as (pvc_orphans_cur) "Hown_pvc_orphans".
       wp_apply (wp_createStatefulPod_preservation γ model_l set_l new_pod_l
         set new_pod (sint.nat ordinal)
         (list_to_set (PodV.key <$> unreserved_pods
           (filter (pending_pod set) pods) current_pods)) dq_set
         with "[$Hset $Hnew_pod $Hpod_reserved $Hown_children
-          $Hpvc_states]").
+          $Hpvc_states $Hown_pvc_orphans]").
       { iFrame "#". iPureIntro.
         pose proof Hset_meta_valid as
           (_ & _ & _ & Hnamespace_nonempty & Hnamespace_valid & _).
         split_and!; done. }
-      iIntros "(Hset & Hpvc_states & Hcreate)".
+      iIntros "(Hset & Hpvc_states & Hown_pvc_orphans & Hcreate)".
       iEval (rewrite /pvc_done) in "Hpvc_states".
       iEval (rewrite persistent_volume_claim_templates_by_name_dom
         /pvc_claim_template_names) in "Hpvc_finish".
@@ -804,7 +815,7 @@ Proof.
         wp_auto_keep. iApply wp_for_post_return. wp_auto_keep.
         iApply ("HΦ" $! false current_pods pvc_map').
         iFrame "Hset Hpods_sl Hpods Hown_pods Hown_pvcs Hown_children
-          Hreserved_pods Hreserved_pvcs".
+          Hreserved_pods Hreserved_pvcs Hown_pvc_orphans".
         iPureIntro. split_and!; try done.
         - etrans; [exact Hpvc_distance|exact Hdistance].
         - by right.
@@ -1238,7 +1249,7 @@ Qed.
 Lemma wp_reconcileReplicas_preservation γ model_l set_l pods_sl
     (set : StatefulSetV.t) (ptrs : list loc)
     (pods reserved : list PodV.t)
-    (pvcs : list PersistentVolumeClaimV.t) dq_set dq_pods terminating_bound :
+    (pvcs : list PersistentVolumeClaimV.t) dq_set dq_pods terminating_bound pvc_orphans :
   {{{ "#Hpkg" ∷
         is_pkg_init code.controllers.statefulset.pkg_id.statefulset ∗
       "#Hisk" ∷ is_kubernetes γ model_l ∗
@@ -1266,6 +1277,9 @@ Lemma wp_reconcileReplicas_preservation γ model_l set_l pods_sl
         own_available_reserved_frag γ 1 key ∨ ∃ uid, own_deleting_reserved_frag γ 1 key uid) ∗
       "Hreserved_pvcs" ∷ ([∗ list] key ∈ missing_pvc_keys set pvcs,
         own_available_reserved_frag γ 1 key) ∗
+      "Hown_pvc_orphans" ∷ own_orphans_frag γ
+        (PersistentVolumeClaimV.kind, set.(StatefulSetV.ObjectMeta').(ObjectMetaV.Namespace'))
+        (DfracOwn 1) pvc_orphans ∗
       "%Hset_valid" ∷ ⌜ StatefulSetV.valid set ⌝ ∗
       "%Hpods_valid" ∷ ⌜ Forall PodV.valid pods ⌝ ∗
       "%Hpods_members" ∷ ⌜ Forall
@@ -1300,6 +1314,9 @@ Lemma wp_reconcileReplicas_preservation γ model_l set_l pods_sl
         own_available_reserved_frag γ 1 key ∨ ∃ uid, own_deleting_reserved_frag γ 1 key uid) ∗
       "Hreserved_pvcs" ∷ ([∗ list] key ∈ missing_pvc_keys set pvcs',
         own_available_reserved_frag γ 1 key) ∗
+      "Hown_pvc_orphans" ∷ (∃ pvc_orphans', own_orphans_frag γ
+        (PersistentVolumeClaimV.kind, set.(StatefulSetV.ObjectMeta').(ObjectMetaV.Namespace'))
+        (DfracOwn 1) pvc_orphans') ∗
       "%Hdistance" ∷ ⌜ match_distance set pods' pvcs' ≤
         match_distance set pods pvcs ⌝ ∗
       "%Hpods_members" ∷ ⌜ Forall
@@ -1312,11 +1329,11 @@ Proof.
   wp_apply (wp_reconcileDesiredPods_preservation γ model_l set_l pods_sl
     set ptrs pods reserved pvcs dq_set dq_pods with
     "[$Hset $Hpods_sl $Hpods $Hown_pods $Hown_pvcs $Hown_children
-      $Hreserved_pods $Hreserved_pvcs]").
+      $Hreserved_pods $Hreserved_pvcs $Hown_pvc_orphans]").
   { iFrame "#". iPureIntro. split_and!; done. }
   iIntros (continue_desired pods1 pvc_map1)
     "(Hset & Hpods_sl & Hpods & Hown_pods & Hown_pvcs &
-      Hown_children & Hreserved_pods & Hreserved_pvcs & %Hpvc_wf1 & %Hdistance1 &
+      Hown_children & Hreserved_pods & Hreserved_pvcs & Hown_pvc_orphans & %Hpvc_wf1 & %Hdistance1 &
       %Hmembers1 & %Hnodup1 & %Hreserved_subset1 & Hdesired_result)".
   iDestruct "Hdesired_result" as "[Hdesired_continue|Hdesired_stop]".
   - iDestruct "Hdesired_continue" as
