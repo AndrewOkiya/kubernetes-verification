@@ -31,8 +31,10 @@ Require Export New.generatedproof.k8s_io.kubernetes.pkg.controller.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.apps.deployment.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.apps.replicaset.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.apps.statefulset.
+Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.core.endpoint.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.core.persistentvolumeclaim.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.core.pod.
+Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.core.service.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.core.serviceaccount.
 Require Export New.generatedproof.k8s_io.kubernetes.pkg.registry.rbac.clusterrole.
 Require Export New.generatedproof.math.rand.
